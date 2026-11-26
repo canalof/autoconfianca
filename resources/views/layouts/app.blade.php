@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex,nofollow">
-    <title>{{ $titulo ?? 'Torque' }} · {{ auth()->user()->empresa->nome_fantasia }}</title>
+    <title>{{ $titulo ?? config('oficina.nome') }} · {{ auth()->user()->empresa->nome_fantasia }}</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     @include('partials.pwa')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -55,7 +55,7 @@
         <div class="flex h-16 shrink-0 items-center gap-3 border-b border-asfalto-2 px-5">
             <img src="/favicon.svg" width="30" height="30" class="rounded-md" alt="">
             <div>
-                <div class="text-lg font-bold leading-none tracking-tight text-white">TORQUE</div>
+                <div class="text-lg font-bold leading-none tracking-tight text-white">{{ config('oficina.nome') }}</div>
                 <div class="mt-1 max-w-[160px] truncate text-xs text-[#8d9aa6]">{{ auth()->user()->empresa->nome_fantasia }}</div>
             </div>
         </div>
@@ -102,7 +102,7 @@
             <button class="rounded-md p-2 hover:bg-fundo" data-menu-abrir aria-label="Abrir menu">
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
             </button>
-            <span class="font-bold">Torque</span>
+            <span class="font-bold">{{ config('oficina.nome') }}</span>
             @can('veiculos.ver')<a href="{{ route('recepcao') }}" class="btn-sinal btn-sm ml-auto">Recepção</a>@endcan
         </header>
         <main class="mx-auto max-w-6xl px-4 py-6 lg:px-8 lg:py-8">

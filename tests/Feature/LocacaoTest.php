@@ -62,7 +62,7 @@ class LocacaoTest extends TestCase
 
         $this->actingAs($u)->get('/locacao')->assertForbidden();
         $this->post('/locacao/frota', ['placa' => 'ABC1D23', 'descricao' => 'Gol', 'km' => 1, 'situacao' => 'disponivel'])->assertForbidden();
-        $this->get('/')->assertOk()->assertDontSee('Reservas e frota');
+        $this->get('/sistema')->assertOk()->assertDontSee('Reservas e frota');
 
         // Condutores e retirada são da oficina e continuam disponíveis
         $this->get('/mobilidade')->assertOk()->assertSee('Condutores e retirada');

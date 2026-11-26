@@ -43,6 +43,17 @@ class WhatsApp
         return $this->tentar($empresa, $msg);
     }
 
+    /**
+     * Envia sem gravar o texto em mensagens_whatsapp. Só para conteúdo sigiloso,
+     * como o código de acesso da área do cliente.
+     */
+    public function enviarSigiloso(Empresa $empresa, ?string $telefone, string $texto): bool
+    {
+        $numero = self::numero($telefone);
+
+        return $numero && $this->disponivel($empresa) && $this->postar($empresa, $numero, $texto);
+    }
+
     public function tentar(Empresa $empresa, \App\Models\MensagemWhatsapp $msg): bool
     {
         $ok = $this->postar($empresa, $msg->destino, $msg->texto, $erro);

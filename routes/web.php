@@ -28,6 +28,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/instalar', 'instalar')->name('instalar');
 
+// Site público
+Route::get('/', [\App\Http\Controllers\SiteController::class, 'inicio'])->name('site.inicio');
+Route::get('/servicos/{slug}', [\App\Http\Controllers\SiteController::class, 'servico'])->name('site.servico');
+Route::get('/sitemap.xml', [\App\Http\Controllers\SiteController::class, 'sitemap'])->name('site.sitemap');
+Route::get('/robots.txt', [\App\Http\Controllers\SiteController::class, 'robots'])->name('site.robots');
+
 Route::middleware('guest')->group(function () {
     Route::get('/entrar', [AuthController::class, 'form'])->name('login');
     Route::post('/entrar', [AuthController::class, 'entrar'])->middleware('throttle:login')->name('login.entrar');
@@ -37,6 +43,18 @@ Route::middleware('guest')->group(function () {
     Route::post('/esqueci-senha', [\App\Http\Controllers\RecuperarSenhaController::class, 'enviar'])->middleware('throttle:login')->name('password.email');
     Route::get('/redefinir-senha/{token}', [\App\Http\Controllers\RecuperarSenhaController::class, 'redefinirForm'])->name('password.reset');
     Route::post('/redefinir-senha', [\App\Http\Controllers\RecuperarSenhaController::class, 'redefinir'])->middleware('throttle:login')->name('password.update');
+});
+
+// Área do cliente: celular + código pelo WhatsApp, depois abre o portal do cliente
+Route::prefix('area-do-cliente')->name('cliente.')->controller(\App\Http\Controllers\AreaClienteController::class)->group(function () {
+    Route::get('/', 'entrarForm')->name('inicio');
+    Route::get('/entrar', 'entrarForm')->name('entrar');
+    Route::post('/entrar', 'enviarCodigo')->middleware('throttle:cliente-codigo')->name('codigo.enviar');
+    Route::get('/codigo', 'codigoForm')->name('codigo');
+    Route::post('/codigo', 'verificar')->middleware('throttle:cliente-verificar')->name('codigo.verificar');
+    Route::get('/escolher', 'escolherForm')->name('escolher');
+    Route::post('/escolher', 'escolher')->name('escolher.salvar');
+    Route::post('/sair', 'sair')->name('sair');
 });
 
 Route::get('/cliente/{token}', [\App\Http\Controllers\PortalClienteController::class, 'ver'])->middleware('throttle:orcamento')->name('portal.ver');
@@ -65,7 +83,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/financeiro/bancos/{conta}/importar-csv', [\App\Http\Controllers\BancoController::class, 'importarCsv'])->middleware('modulo:bancos')->name('bancos.importar');
 
     Route::post('/sair', [AuthController::class, 'sair'])->name('logout');
-    Route::get('/', PainelController::class)->name('painel');
+    Route::get('/sistema', PainelController::class)->name('painel');
 
     // Recepção por placa
     Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao');

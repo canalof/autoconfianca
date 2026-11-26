@@ -8,7 +8,9 @@
     @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-screen">
-    <header class="bg-asfalto text-white"><div class="mx-auto max-w-2xl px-4 py-4"><div class="text-lg font-bold">{{ $empresa->nome_fantasia }}</div><div class="text-sm text-[#c5ced6]">{{ $empresa->telefone }}</div></div></header>
+    <header class="bg-asfalto text-white"><div class="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-4"><div><div class="text-lg font-bold">{{ $empresa->nome_fantasia }}</div><div class="text-sm text-[#c5ced6]">{{ $empresa->telefone }}</div></div>
+        @if (session('area_cliente.id') === $cliente->id)<form method="post" action="{{ route('cliente.sair') }}">@csrf<button class="rounded-md border border-[#3e5466] px-3 py-1.5 text-sm hover:border-sinal">Sair</button></form>@endif
+    </div></header>
     <main class="mx-auto max-w-2xl px-4 py-6">
         <h1 class="mb-1 text-xl">Olá, {{ explode(' ', trim($cliente->nome))[0] }}!</h1>
         <p class="mb-6 text-suave">Aqui ficam os serviços feitos nos seus carros, as garantias e as próximas revisões.</p>

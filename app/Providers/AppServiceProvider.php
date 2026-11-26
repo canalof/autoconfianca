@@ -36,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Limites separados: cada um com sua própria contagem
+        RateLimiter::for('cliente-codigo', fn (Request $r) => Limit::perMinutes(10, 5)->by('cliente-codigo|'.$r->ip()));
+        RateLimiter::for('cliente-verificar', fn (Request $r) => Limit::perMinutes(10, 10)->by('cliente-verificar|'.$r->ip()));
         RateLimiter::for('login', fn (Request $r) => [
             Limit::perMinute(6)->by('login|'.mb_strtolower((string) $r->input('email')).'|'.$r->ip()),
             Limit::perMinute(30)->by('login-ip|'.$r->ip()),
