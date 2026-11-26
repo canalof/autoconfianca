@@ -31,6 +31,10 @@ fi
 
 # ---------------------------------------------------------------------------
 passo "1/9 Pacotes do sistema"
+# Em algumas máquinas o PackageKit vem desligado ("masked") e o gancho dele faz o apt-get update falhar.
+if [ -f /etc/apt/apt.conf.d/20packagekit ] && [ "$(systemctl is-enabled packagekit 2>/dev/null || true)" = masked ]; then
+  mv /etc/apt/apt.conf.d/20packagekit /root/20packagekit.desligado
+fi
 apt-get update -qq
 apt-get install -y -qq software-properties-common curl git unzip acl rsync ca-certificates gnupg >/dev/null
 if ! apt-cache show php8.3-fpm >/dev/null 2>&1; then
