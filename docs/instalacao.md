@@ -8,6 +8,12 @@ Site, área do cliente e sistema rodam juntos em **confiancarev.com.br**:
 | `/area-do-cliente` | Área do cliente (celular + código pelo WhatsApp) |
 | `/entrar` e `/sistema` | Login e sistema da equipe |
 
+## Jeito rápido: um script só
+
+Na máquina nova, como `root`, rode `bash instalar-servidor.sh` (o arquivo é `scripts/instalar-servidor.sh`). Ele faz todos os passos abaixo: pede o e-mail, o nome do dono e o CNPJ, mostra uma chave para colar em *Deploy keys* do GitHub (só leitura), instala tudo, cria o banco com senha aleatória, cria o usuário do dono (mostra a senha), liga o HTTPS se o domínio já aponta para a máquina e no fim mostra os 4 segredos do deploy automático. Pode rodar de novo: completa o que faltou (por exemplo o HTTPS depois que o DNS apontar).
+
+Os passos manuais abaixo são o que o script faz, para conferência ou conserto.
+
 Comandos como `root`. Troque `SENHA_DO_BANCO` por uma senha forte.
 
 ## 1. Pacotes
