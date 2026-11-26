@@ -35,7 +35,7 @@ Na exportação de 26/11/2026: 4.366 produtos, 872 clientes, 156 fornecedores, 6
 
 ## O que NÃO é importado, de propósito
 
-- **Saldo do estoque.** No sistema antigo nenhum produto tinha saldo positivo (2.437 zerados e 1.929 negativos). Todos entram com saldo zero. No primeiro dia, faça a contagem em **Estoque › Balanço** (dá para lançar por planilha).
+- **Saldo do estoque.** No sistema antigo nenhum produto tinha saldo positivo (2.437 zerados e 1.929 negativos). Todos entram com saldo zero. No primeiro dia, faça a contagem em **Balanço de estoque**, no menu do sistema (dá para lançar por planilha).
 - **OS antigas como OS do sistema.** Elas ficam como histórico só para consulta: aparecem na ficha do veículo (todas) e na área do cliente (só as do próprio cliente; o cliente não vê serviços de um dono anterior do carro).
 
 ## Relatórios para conferir
