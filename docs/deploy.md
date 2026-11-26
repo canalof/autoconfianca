@@ -63,3 +63,11 @@ No servidor: `rm /home/deploy/.ssh/authorized_keys`. Para voltar, rode o script 
 - Mudança no servidor **só pelo GitHub**. Arquivo editado direto no servidor é sobrescrito ou apagado no próximo deploy.
 - Migration nova sempre com `down()` e sem apagar dados sem backup.
 - O backup antes do deploy e o backup diário das 02:30 dividem a mesma pasta e guardam os 30 mais recentes. Continue copiando backups para fora do servidor.
+
+
+## Site institucional e sistema
+
+- O site (pasta `portal/`) fica em `/var/www/autocentro` (segredo opcional `PORTAL_PATH`) e é servido na raiz do domínio.
+- O sistema fica em `/var/www/autoconfianca` e aparece em `/sistema` por um link simbólico (`/var/www/autocentro/sistema` → `/var/www/autoconfianca/public`). Também são links: `build`, `favicon.ico` (e, nesta instalação, `site`, `storage`, `icons`, `favicon.svg`, `manifest.webmanifest`). O deploy não apaga esses links.
+- `APP_URL` no `.env` do servidor: `https://confiancarev.com.br/sistema`. Os links mandados pelo WhatsApp a partir dos comandos agendados usam esse endereço.
+- O deploy confere `APP_URL/entrar` e a página inicial do site; os dois precisam responder 200.

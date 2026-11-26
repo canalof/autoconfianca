@@ -13,7 +13,7 @@ class AcessoTest extends TestCase
 
     public function test_visitante_vai_para_o_login(): void
     {
-        $this->get('/sistema')->assertRedirect('/entrar');
+        $this->get('/')->assertRedirect('/entrar');
         $this->get('/entrar')->assertOk()->assertSee('Entrar');
     }
 
@@ -26,7 +26,7 @@ class AcessoTest extends TestCase
         $this->assertGuest();
 
         $this->post('/entrar', ['email' => 'DONO@oficina.com.br', 'password' => 'senha12345'])
-            ->assertRedirect('/sistema');
+            ->assertRedirect('/');
         $this->assertAuthenticatedAs($u);
     }
 
@@ -44,7 +44,7 @@ class AcessoTest extends TestCase
         $u = $this->novaEmpresa();
         Empresa::whereKey($u->empresa_id)->update(['ativo' => false]);
 
-        $this->actingAs($u)->get('/sistema')->assertRedirect('/entrar');
+        $this->actingAs($u)->get('/')->assertRedirect('/entrar');
         $this->assertGuest();
     }
 
@@ -54,7 +54,7 @@ class AcessoTest extends TestCase
         $mec = $this->usuarioNaMesmaEmpresa($dono, Perfil::Mecanico);
 
         $this->actingAs($mec);
-        $this->get('/sistema')->assertOk();
+        $this->get('/')->assertOk();
         $this->get('/usuarios')->assertForbidden();
         $this->get('/empresa')->assertForbidden();
         $this->post('/clientes', ['nome' => 'Não pode'])->assertForbidden();

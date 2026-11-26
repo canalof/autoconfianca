@@ -35,7 +35,7 @@ class ModulosTest extends TestCase
     public function test_oficina_basica_ve_so_o_essencial(): void
     {
         $u = $this->oficinaBasica();
-        $menu = $this->actingAs($u)->get('/sistema')->assertOk();
+        $menu = $this->actingAs($u)->get('/')->assertOk();
         foreach (['Ordens de serviço', 'Clientes', 'Agenda', 'Produtos', 'Caixa', 'Contas a receber', 'Empresa e módulos', 'Ajuda'] as $item) {
             $menu->assertSee($item);
         }
@@ -58,7 +58,7 @@ class ModulosTest extends TestCase
         $e = $u->empresa->fresh();
         $this->assertSame([true, true, false, false], [$e->temModulo('bancos'), $e->temModulo('fiscal'), $e->temModulo('comissoes'), $e->temModulo('condutores')]);
         $this->actingAs($u->fresh())->get('/financeiro/bancos')->assertOk();
-        $this->get('/sistema')->assertSee('Bancos')->assertSee('Notas fiscais')->assertDontSee('Comissões');
+        $this->get('/')->assertSee('Bancos')->assertSee('Notas fiscais')->assertDontSee('Comissões');
         $this->get('/empresa')->assertOk()->assertSee('Dados fiscais');
 
         $this->salvarModulos($u->fresh(), [])->assertSessionHasNoErrors();

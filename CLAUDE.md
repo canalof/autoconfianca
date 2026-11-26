@@ -25,7 +25,7 @@ Código de domínio, telas, mensagens e testes em português. Textos de tela cur
 
 ## Visual
 
-Tokens em `resources/css/app.css` (`asfalto`, `sinal`, `placa`...). Amarelo `sinal` só para o item ativo, foco e a ação principal da recepção. Componente `<x-placa>` para mostrar placas.
+Tokens em `resources/css/app.css`: identidade AutoConfiança (grafite `asfalto`, azul `marca` para estrutura, links e ação principal; vermelho `sinal` para destaque e chamadas como recepção/novo contrato; fundo papel quente). Fonte Inter; placas em Barlow Condensed. Componente `<x-placa>` para mostrar placas.
 
 ## Módulos
 
@@ -36,7 +36,7 @@ Tokens em `resources/css/app.css` (`asfalto`, `sinal`, `placa`...). Amarelo `sin
 - WhatsApp automático: `Services/WhatsApp` (Evolution API, opcional).
 - Agendador: `routes/console.php` (`torque:notas` a cada 5 min, `torque:lembretes` às 9h).
 - Em Blade, use sempre `@php ... @endphp` (não misture com `@php(...)` no mesmo arquivo).
-- Site público: `SiteController` + `resources/views/site` + componente `<x-site>`; textos e dados em `config/oficina.php` (`OFICINA_*` no `.env`). Assets em `public/site/`. O sistema da equipe fica em `/sistema` (rota `painel`).
+- **Site institucional é estático** (pasta `portal/`, HTML/CSS/JS sem build), servido na raiz do domínio a partir de `/var/www/autocentro`. O Laravel roda em **`/sistema`** (link simbólico `portal/sistema` → `public/`), então dentro do Laravel as rotas são relativas: painel em `/`, área do cliente em `/area-do-cliente`, troca de área em `POST /area`. Arquivos públicos do sistema são referenciados como `/sistema/...` (marca, ícones, manifest, `sw.js`). `APP_URL` em produção termina em `/sistema`; `oficina.dominio` (`OFICINA_SITE_URL`) é a raiz do site. O deploy envia `portal/` para `PORTAL_PATH` sem apagar os links simbólicos. As views antigas do site em Laravel (`SiteController`, `resources/views/site`) não são mais usadas; `/institucional` só redireciona.
 - Área do cliente: `AreaClienteController` (`/area-do-cliente`): celular + código de 6 dígitos pelo WhatsApp (`WhatsApp::enviarSigiloso`, nunca grava o código), 10 min e 5 tentativas; depois abre o portal (`PortalClienteController`, `/cliente/{token}`). Mesma resposta com ou sem cadastro.
 - Importação do Oficina Inteligente: `Services/Importacao/OficinaInteligente` + `php artisan autoconfianca:importar` (`docs/importacao-oficina-inteligente.md`). Lê .xlsx com `Support/LeitorXlsx` (sem dependências). Não importa saldo de estoque. OS antigas ficam em `historico_os_anteriores` (só consulta). Dados reais nunca entram no repositório nem nos testes.
 - Instalação na máquina nova: `docs/instalacao.md` (script `scripts/instalar-servidor.sh`).

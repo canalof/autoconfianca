@@ -45,6 +45,13 @@ for d in "$APP/storage" "$APP/bootstrap/cache"; do
 done
 # A pasta-mãe precisa deixar o deploy entrar.
 setfacl -m "u:$USUARIO:x" "$(dirname "$APP")"
+# Site institucional estático (raiz do domínio): o deploy também atualiza.
+PORTAL="${PORTAL:-/var/www/autocentro}"
+if [ -d "$PORTAL" ]; then
+  chown -R "$USUARIO":www-data "$PORTAL"
+  find "$PORTAL" -type d -exec chmod 2755 {} +
+  find "$PORTAL" -type f -exec chmod 644 {} +
+fi
 
 echo "== 5/6 Recarregar o PHP-FPM sem senha (só esse comando)"
 cat > /etc/sudoers.d/torque-deploy <<EOF

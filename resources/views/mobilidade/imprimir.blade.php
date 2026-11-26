@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TORQUE · Documento {{ $documento->id }}</title>
+    <title>AutoConfiança · Documento {{ $documento->id }}</title>
     <style>
         body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #1d2730; font: 16px/1.5 system-ui, sans-serif; }
         nav { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
@@ -16,7 +16,7 @@
 <body>
     <nav><a href="{{ route('mobilidade.documentos') }}">Contratos e vistorias</a><button onclick="window.print()">Imprimir / salvar PDF</button></nav>
     <main>
-        <h1>TORQUE · Documento #{{ $documento->id }}</h1>
+        <h1>AutoConfiança · Documento #{{ $documento->id }}</h1>
         <p>Gerado em {{ $documento->created_at->format('d/m/Y H:i') }}</p>
         <div class="texto">{{ $documento->texto }}</div>
         @if ($documento->aceite_nome)<p>Aceite presencial registrado em nome de {{ $documento->aceite_nome }}.</p>@endif

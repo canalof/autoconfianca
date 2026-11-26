@@ -29,7 +29,8 @@ use Illuminate\Support\Facades\Route;
 Route::view('/instalar', 'instalar')->name('instalar');
 
 // Site público
-Route::get('/', [\App\Http\Controllers\SiteController::class, 'inicio'])->name('site.inicio');
+// O site público agora é estático na raiz do domínio; esta rota só redireciona para ele.
+Route::get('/institucional', [\App\Http\Controllers\SiteController::class, 'inicio'])->name('site.inicio');
 Route::get('/servicos/{slug}', [\App\Http\Controllers\SiteController::class, 'servico'])->name('site.servico');
 Route::get('/sitemap.xml', [\App\Http\Controllers\SiteController::class, 'sitemap'])->name('site.sitemap');
 Route::get('/robots.txt', [\App\Http\Controllers\SiteController::class, 'robots'])->name('site.robots');
@@ -83,8 +84,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/financeiro/bancos/{conta}/importar-csv', [\App\Http\Controllers\BancoController::class, 'importarCsv'])->middleware('modulo:bancos')->name('bancos.importar');
 
     Route::post('/sair', [AuthController::class, 'sair'])->name('logout');
-    Route::get('/sistema', PainelController::class)->name('painel');
-    Route::post('/sistema/area', \App\Http\Controllers\AreaController::class)->name('area.trocar');
+    Route::get('/', PainelController::class)->name('painel');
+    Route::post('/area', \App\Http\Controllers\AreaController::class)->name('area.trocar');
 
     // Locadora: área separada da oficina (painel, frota, multas; contratos em /locacao).
     Route::prefix('locadora')->name('locadora.')->controller(\App\Http\Controllers\LocadoraController::class)->group(function () {

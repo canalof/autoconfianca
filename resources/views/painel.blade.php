@@ -53,9 +53,9 @@
                 <h2>No pátio agora</h2>
                 <span class="text-sm font-semibold text-asfalto-3">Ver quadro</span>
             </div>
-            <div class="grid grid-cols-5 divide-x divide-linha">
+            <div class="grid grid-cols-2 gap-px bg-linha sm:grid-cols-5">
                 @foreach ($patio as $st)
-                    <div class="px-3 py-3 sm:px-5">
+                    <div @class(['bg-white px-3 py-3 sm:px-5', 'col-span-2 sm:col-span-1' => $loop->last])>
                         <div @class(['text-3xl font-semibold', 'text-sinal-escuro' => $st === \App\Support\StatusOs::Aguardando && ($porStatus[$st->value] ?? 0) > 0, 'text-ok' => $st === \App\Support\StatusOs::Pronta && ($porStatus[$st->value] ?? 0) > 0])>{{ $porStatus[$st->value] ?? 0 }}</div>
                         <div class="truncate text-xs text-suave sm:text-sm">{{ $st === \App\Support\StatusOs::Pronta ? 'Prontos' : $st->rotulo() }}</div>
                     </div>

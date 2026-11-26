@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex,nofollow">
     <title>{{ $titulo ?? config('oficina.nome') }} · {{ auth()->user()->empresa->nome_fantasia }}</title>
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/sistema/favicon.svg" type="image/svg+xml">
     @include('partials.pwa')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -70,18 +70,17 @@
 @endphp
 <div class="lg:flex">
     <aside class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col bg-asfalto text-[#c5ced6] transition-transform lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 [.menu-aberto_&]:translate-x-0" aria-label="Menu principal">
-        <div class="flex h-16 shrink-0 items-center gap-3 border-b border-asfalto-2 px-5">
-            <img src="/favicon.svg" width="30" height="30" class="rounded-md" alt="">
-            <div>
-                <div class="text-lg font-bold leading-none tracking-tight text-white">{{ config('oficina.nome') }}</div>
-                <div class="mt-1 max-w-[160px] truncate text-xs text-[#8d9aa6]">{{ $areaAtual === 'locadora' ? 'Locadora' : auth()->user()->empresa->nome_fantasia }}</div>
-            </div>
+        <div class="shrink-0 border-b border-asfalto-2 px-5 pb-4 pt-5">
+            <a href="{{ route('painel') }}" class="block w-fit" aria-label="{{ config('oficina.nome') }} — início">
+                <img src="/sistema/marca-branco.svg" width="176" height="50" alt="{{ config('oficina.nome') }}" class="h-auto w-[176px]">
+            </a>
+            <div class="mt-2.5 max-w-[176px] truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d9aa6]">{{ $areaAtual === 'locadora' ? 'Locadora' : 'Oficina' }} · {{ config('oficina.endereco.cidade') }}</div>
         </div>
         @if (count($areasUsuario) > 1)
             <form method="post" action="{{ route('area.trocar') }}" class="mx-3 mt-3 grid grid-cols-2 gap-1 rounded-lg bg-asfalto-2 p-1" aria-label="Área do sistema">
                 @csrf
                 @foreach ($areasUsuario as $a)
-                    <button name="area" value="{{ $a }}" @class(['rounded-md px-2 py-1.5 text-sm font-semibold', 'bg-sinal text-asfalto' => $a === $areaAtual, 'text-[#c5ced6] hover:text-white' => $a !== $areaAtual]) @if($a === $areaAtual) aria-pressed="true" @endif>{{ \App\Support\Area::ROTULOS[$a] }}</button>
+                    <button name="area" value="{{ $a }}" @class(['rounded-md px-2 py-1.5 text-sm font-semibold', 'bg-marca text-white' => $a === $areaAtual, 'text-[#c5ced6] hover:text-white' => $a !== $areaAtual]) @if($a === $areaAtual) aria-pressed="true" @endif>{{ \App\Support\Area::ROTULOS[$a] }}</button>
                 @endforeach
             </form>
         @endif
@@ -101,7 +100,7 @@
                     @php [$rota, $rotulo, $icone] = $item; $ativo = $ativoEm($item); @endphp
                     <a href="{{ route($rota) }}" @class([
                         'relative mb-0.5 flex items-center gap-3 rounded-md px-3 py-2 text-[15px] font-medium hover:bg-asfalto-2 hover:text-white',
-                        'bg-asfalto-2 text-white before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r before:bg-sinal' => $ativo,
+                        'bg-marca text-white hover:bg-marca before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r before:bg-sinal' => $ativo,
                     ]) @if($ativo) aria-current="page" @endif>
                         <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $icone }}"/></svg>
                         {{ $rotulo }}
@@ -128,7 +127,8 @@
             <button class="rounded-md p-2 hover:bg-fundo" data-menu-abrir aria-label="Abrir menu">
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
             </button>
-            <span class="font-bold">{{ config('oficina.nome') }}@if ($areaAtual === 'locadora') <span class="font-normal text-suave">· Locadora</span>@endif</span>
+            <img src="/sistema/marca-cor.svg" alt="{{ config('oficina.nome') }}" class="h-8 w-auto text-asfalto">
+            @if ($areaAtual === 'locadora') <span class="text-sm font-normal text-suave">Locadora</span>@endif
             @if ($areaAtual === 'locadora')
                 @can('locacao.editar')<a href="{{ route('locacao.novo') }}" class="btn-sinal btn-sm ml-auto">Novo contrato</a>@endcan
             @else

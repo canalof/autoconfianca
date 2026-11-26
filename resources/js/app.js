@@ -75,7 +75,7 @@ if (listaModelos) {
 }
 
 if ('serviceWorker' in navigator && document.querySelector('link[rel="manifest"]')) {
-    navigator.serviceWorker.register('/torque-sw.js').catch(() => {
+    navigator.serviceWorker.register('/sistema/sw.js').catch(() => {
         // O acesso pelo navegador continua disponível se a instalação falhar.
     });
 }

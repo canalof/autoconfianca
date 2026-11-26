@@ -63,18 +63,18 @@ class LocadoraTest extends TestCase
     public function test_dono_troca_de_area_e_cada_area_tem_seu_menu(): void
     {
         $u = $this->comLocadora();
-        $this->actingAs($u)->get('/sistema')->assertOk()->assertSee('Ordens de serviço')->assertDontSee('Multas');
-        $this->post('/sistema/area', ['area' => 'locadora'])->assertRedirect('/locadora');
-        $this->get('/sistema')->assertRedirect('/locadora');
+        $this->actingAs($u)->get('/')->assertOk()->assertSee('Ordens de serviço')->assertDontSee('Multas');
+        $this->post('/area', ['area' => 'locadora'])->assertRedirect('/locadora');
+        $this->get('/')->assertRedirect('/locadora');
         $this->get('/locadora')->assertOk()->assertSee('Frota agora')->assertSee('Multas')->assertDontSee('Ordens de serviço');
-        $this->post('/sistema/area', ['area' => 'oficina'])->assertRedirect('/sistema');
-        $this->get('/sistema')->assertOk()->assertSee('No pátio agora');
+        $this->post('/area', ['area' => 'oficina'])->assertRedirect('/');
+        $this->get('/')->assertOk()->assertSee('No pátio agora');
     }
 
     public function test_sem_modulo_nao_existe_area_locadora(): void
     {
         $u = $this->novaEmpresa();
-        $this->actingAs($u)->post('/sistema/area', ['area' => 'locadora'])->assertSessionHasErrors('area');
+        $this->actingAs($u)->post('/area', ['area' => 'locadora'])->assertSessionHasErrors('area');
         $this->get('/locadora')->assertForbidden();
     }
 
@@ -83,11 +83,11 @@ class LocadoraTest extends TestCase
         $dono = $this->comLocadora();
         $atendente = $this->em($dono, fn () => User::create(['empresa_id' => $dono->empresa_id, 'name' => 'Ana Balcão', 'email' => 'ana@exemplo.test',
             'password' => 'senha-forte-123', 'perfil' => Perfil::Locadora, 'ativo' => true]));
-        $this->actingAs($atendente)->get('/sistema')->assertRedirect('/locadora');
-        $this->get('/locadora')->assertOk()->assertDontSee('/sistema/area');
+        $this->actingAs($atendente)->get('/')->assertRedirect('/locadora');
+        $this->get('/locadora')->assertOk()->assertDontSee('Área do sistema');
         $this->get('/os')->assertForbidden();
         $this->get('/produtos')->assertForbidden();
-        $this->post('/sistema/area', ['area' => 'oficina'])->assertSessionHasErrors('area');
+        $this->post('/area', ['area' => 'oficina'])->assertSessionHasErrors('area');
         $this->get('/locacao/novo')->assertOk()->assertSee('Novo aluguel');
     }
 
@@ -102,7 +102,7 @@ class LocadoraTest extends TestCase
         });
 
         $this->actingAs($u)->get('/financeiro/receber')->assertOk()->assertSee('OS da oficina')->assertDontSee('Aluguel semana');
-        $this->post('/sistema/area', ['area' => 'locadora']);
+        $this->post('/area', ['area' => 'locadora']);
         $this->get('/financeiro/receber')->assertOk()->assertSee('Aluguel semana')->assertDontSee('OS da oficina');
         $this->get('/financeiro/pagar')->assertOk()->assertDontSee('Filtro da oficina');
         // O caixa aberto da oficina não vale para a locadora.
@@ -148,14 +148,14 @@ class LocadoraTest extends TestCase
         $carro = $this->em($u, fn () => MobilidadeFrota::firstOrFail());
         $this->assertSame(['FRT2B45', '00123456789', 9990, 60000], [$carro->placa, $carro->renavam, $carro->diaria_centavos, $carro->semanal_centavos]);
 
-        $this->post('/sistema/area', ['area' => 'locadora']);
+        $this->post('/area', ['area' => 'locadora']);
         $this->get('/locadora')->assertOk()->assertSee('IPVA vence')->assertSee('Revisão aos 15.300 km');
         $this->get('/locadora/frota')->assertOk()->assertSee('Fiat Mobi Like 2023');
         $this->get('/locacao/novo')->assertOk()->assertSee('data-semanal="600,00"', false);
 
         $this->post("/locadora/frota/{$carro->id}/oficina")->assertRedirect('/recepcao?placa=FRT2B45');
         $this->assertSame('manutencao', $this->em($u, fn () => $carro->fresh()->situacao));
-        $this->get('/sistema')->assertOk()->assertSee('No pátio agora');
+        $this->get('/')->assertOk()->assertSee('No pátio agora');
     }
 
     public function test_multa_acha_o_contrato_e_e_cobrada_do_cliente(): void
@@ -163,7 +163,7 @@ class LocadoraTest extends TestCase
         $u = $this->comLocadora();
         $r = $this->alugar($u, ['plano' => 'diaria', 'valor' => '120,00']);
         $this->post("/locacao/reservas/{$r->id}/entregar", $this->saida())->assertSessionHas('ok');
-        $this->post('/sistema/area', ['area' => 'locadora']);
+        $this->post('/area', ['area' => 'locadora']);
 
         $this->post('/locadora/multas', ['frota_id' => $r->frota_id, 'data_infracao' => now()->format('Y-m-d\TH:i'), 'descricao' => 'Avançar sinal',
             'valor' => '293,47', 'auto' => 'A123', 'lancar_pagar' => '1'])->assertSessionHas('ok');

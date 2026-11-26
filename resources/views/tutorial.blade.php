@@ -1,5 +1,5 @@
 <x-app titulo="Tutorial">
-    <h1>Tutorial do TORQUE</h1>
+    <h1>Tutorial do sistema</h1>
     <p class="mb-4 text-suave">Guia da equipe da oficina, do primeiro acesso ao fechamento do caixa.</p>
     <nav class="mb-6 flex flex-wrap gap-2" aria-label="Tópicos do tutorial">
         <a class="btn btn-sm" href="#primeiro-acesso">Primeiro acesso e equipe</a>
@@ -31,7 +31,7 @@
             <ol class="mt-3 list-decimal space-y-2 pl-5">
                 <li>Em <strong>Agenda</strong>, clique em <strong>+ Agendar</strong> no dia desejado. Selecione um cliente ou escreva o nome de quem ainda não tem cadastro. Informe serviço, data, hora e duração.</li>
                 <li>Use <strong>Confirmou</strong> quando o cliente confirmar, <strong>Chegou</strong> ao receber o veículo e <strong>Não veio</strong> para registrar a falta. Se o veículo já estiver vinculado, use <strong>Chegou: abrir OS</strong> para abrir a ordem.</li>
-                <li>Em <strong>Catálogo de serviços</strong>, informe o prazo de revisão nos serviços que precisam de retorno. Ao entregar o veículo, o TORQUE gera o lembrete para os serviços aplicáveis.</li>
+                <li>Em <strong>Catálogo de serviços</strong>, informe o prazo de revisão nos serviços que precisam de retorno. Ao entregar o veículo, o AutoConfiança gera o lembrete para os serviços aplicáveis.</li>
                 <li>Em <strong>Lembretes de revisão</strong>, use <strong>Agendar</strong> para marcar o retorno. Se usar WhatsApp manual, abra a mensagem, envie ao cliente que autorizou o contato e só então clique em <strong>Confirmar envio</strong>.</li>
             </ol>
             @can('agenda.ver')
@@ -115,7 +115,7 @@
                 <li>Preencha <strong>Código do banco</strong>, <strong>Agência</strong> e <strong>Número da conta</strong> conforme os dados do banco, quando aplicáveis. Selecione <strong>Corrente</strong>, <strong>Poupança</strong> ou <strong>Pagamento</strong> em <strong>Tipo de conta</strong>.</li>
                 <li>Clique em <strong>Cadastrar conta</strong> e confira a conta na lista. Para receber por Pix nessa conta, siga a configuração abaixo.</li>
             </ol>
-            <p class="mt-3 text-suave">O cadastro identifica a conta no TORQUE. Ele serve de base para registrar movimentos, importar extratos e configurar a chave Pix.</p>
+            <p class="mt-3 text-suave">O cadastro identifica a conta no AutoConfiança. Ele serve de base para registrar movimentos, importar extratos e configurar a chave Pix.</p>
             @can('financeiro.ver')<a class="btn btn-sm mt-3" href="{{ route('bancos.index') }}">Abrir Bancos</a>@endcan
         </li>
         <li id="pix" class="card card-corpo">
@@ -125,9 +125,9 @@
                 <li>Informe o <strong>Nome do recebedor</strong> e a <strong>Cidade</strong>. Clique em <strong>Salvar Pix manual</strong>. A conta vai aparecer como configurada.</li>
                 <li>Confira se a cobrança está em <strong>Contas a receber → Em aberto</strong>. Abra <strong>Pix</strong>, selecione a <strong>Conta bancária</strong> e a <strong>Conta a receber</strong> e clique em <strong>Preparar cobrança</strong>.</li>
                 <li>Na lista de cobranças, abra <strong>Ver QR Code e Pix Copia e Cola</strong>. Antes do pagamento, confira no aplicativo do banco o recebedor e o valor.</li>
-                <li>Depois que o crédito aparecer no extrato da oficina, clique em <strong>Confirmar recebimento</strong>. O TORQUE baixa o título em <strong>Contas a receber</strong> e marca a cobrança como confirmada.</li>
+                <li>Depois que o crédito aparecer no extrato da oficina, clique em <strong>Confirmar recebimento</strong>. O AutoConfiança baixa o título em <strong>Contas a receber</strong> e marca a cobrança como confirmada.</li>
             </ol>
-            <p class="mt-3 text-suave">A baixa do Pix manual depende da sua conferência no banco. Se você cancelar a preparação no TORQUE, um QR Code já compartilhado ainda pode ser pago no banco.</p>
+            <p class="mt-3 text-suave">A baixa do Pix manual depende da sua conferência no banco. Se você cancelar a preparação no AutoConfiança, um QR Code já compartilhado ainda pode ser pago no banco.</p>
             @can('financeiro.ver')
                 <div class="mt-3 flex flex-wrap gap-2">
                     <a class="btn btn-sm" href="{{ route('bancos.index') }}">Configurar chave</a>
@@ -150,7 +150,7 @@
             <h2>8. Configure e emita notas fiscais</h2>
             <ol class="mt-3 list-decimal space-y-2 pl-5">
                 <li>Em <strong>Empresa → Dados fiscais</strong>, confira com a contabilidade o CNPJ, a razão social, o endereço, a inscrição municipal, o código IBGE e o regime tributário. Para a primeira oficina, em <strong>Hortolândia/SP</strong>, o código IBGE é <strong>3519071</strong>. Use o código e as regras da cidade da própria oficina nos próximos cadastros.</li>
-                <li>Confirme o emissor aplicável ao CNPJ. Em Hortolândia, o portal municipal é o <strong>Giss Online V2</strong> para quem emite pelo município. Para microempresas e empresas de pequeno porte do Simples Nacional, a NFS-e deve ser emitida pelo <strong>Emissor Nacional</strong> desde 1º de novembro de 2026. A integração atual do TORQUE usa o fluxo municipal da Focus NFe. Enquanto o fluxo aplicável à oficina não estiver homologado, emita a nota no portal correspondente.</li>
+                <li>Confirme o emissor aplicável ao CNPJ. Em Hortolândia, o portal municipal é o <strong>Giss Online V2</strong> para quem emite pelo município. Para microempresas e empresas de pequeno porte do Simples Nacional, a NFS-e deve ser emitida pelo <strong>Emissor Nacional</strong> desde 1º de novembro de 2026. A integração atual do AutoConfiança usa o fluxo municipal da Focus NFe. Enquanto o fluxo aplicável à oficina não estiver homologado, emita a nota no portal correspondente.</li>
                 <li>Quando o fluxo municipal for o correto, confirme o credenciamento, certificado digital e os códigos de serviço com a contabilidade e o provedor. Cadastre o token da Focus em <strong>Empresa → Dados fiscais</strong> e comece pelo ambiente <strong>Homologação</strong>. A demonstração e a homologação servem para teste.</li>
                 <li>Na OS, confira o cadastro do cliente e os itens aprovados. Registre o recebimento e abra <strong>Notas fiscais</strong> na OS. Use <strong>Emitir NFS-e (serviços)</strong> para os serviços. Para peças, use NFC-e ou NF-e conforme a orientação fiscal da oficina e confira o NCM dos produtos.</li>
                 <li>Confira o retorno em <strong>Notas fiscais</strong>. Se estiver processando, use <strong>Atualizar situação</strong>. Se houver rejeição, revise a mensagem antes de tentar novamente. Quando disponível, consulte o PDF ou XML da nota autorizada.</li>
@@ -163,9 +163,9 @@
             </div>
         </li>
         <li id="instalar-app" class="card card-corpo">
-            <h2>9. Instale o TORQUE no celular</h2>
-            <p class="mt-2">No Android, abra o TORQUE pelo Chrome e use <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>. No iPhone, abra pelo Safari e use <strong>Compartilhar → Adicionar à Tela de Início</strong>.</p>
-            <p class="mt-2">Depois, abra pelo ícone do TORQUE e entre com a conta da oficina. Mantenha a internet ativa para buscar dados e salvar o atendimento.</p>
+            <h2>9. Instale o sistema no celular</h2>
+            <p class="mt-2">No Android, abra o AutoConfiança pelo Chrome e use <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>. No iPhone, abra pelo Safari e use <strong>Compartilhar → Adicionar à Tela de Início</strong>.</p>
+            <p class="mt-2">Depois, abra pelo ícone do AutoConfiança e entre com a conta da oficina. Mantenha a internet ativa para buscar dados e salvar o atendimento.</p>
             <a class="btn btn-sm mt-3" href="{{ route('instalar') }}">Abrir instruções de instalação</a>
         </li>
         <li id="caixa" class="card card-corpo">

@@ -77,7 +77,7 @@
                             @foreach (ConferenciaCnh::FINALIDADES as $valor => $rotulo)
                                 <label class="block"><input type="checkbox" name="finalidades[]" value="{{ $valor }}" @checked(in_array($valor, $integracao?->finalidades ?? [], true))> {{ $rotulo }}</label>
                             @endforeach
-                            <label class="block"><input type="checkbox" name="confirmacao_contrato" value="1" required> Confirmo o contrato da oficina, a autorização para o uso pelo TORQUE e as finalidades selecionadas.</label>
+                            <label class="block"><input type="checkbox" name="confirmacao_contrato" value="1" required> Confirmo o contrato da oficina, a autorização para o uso pelo AutoConfiança e as finalidades selecionadas.</label>
                             <button class="btn-primario">Salvar credenciais</button>
                         </form>
                     </details>
@@ -108,7 +108,7 @@
                             @csrf
                             <label class="campo"><span>Sua senha atual (confirmação de identidade)</span><input class="input" type="password" name="senha_atual" autocomplete="current-password" required></label>
                             <p class="text-sm text-suave">Remover as credenciais exige confirmar sua senha. A remoção é auditada e não expõe segredos.</p>
-                            <button class="btn" name="acao" value="revogar">Remover credenciais do TORQUE</button>
+                            <button class="btn" name="acao" value="revogar">Remover credenciais do AutoConfiança</button>
                         </form>
                     @endif
                 @endif

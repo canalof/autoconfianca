@@ -1,8 +1,8 @@
 @import 'tailwindcss';
-@import '@fontsource/barlow/400.css';
-@import '@fontsource/barlow/500.css';
-@import '@fontsource/barlow/600.css';
-@import '@fontsource/barlow/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 @import '@fontsource/barlow-condensed/600.css';
 @import '@fontsource/barlow-condensed/700.css';
 
@@ -12,22 +12,26 @@
 @source '../**/*.js';
 
 /*
- * Identidade "Torque": cinza-asfalto, amarelo de faixa de sinalização usado com parcimônia
- * (marcação de item ativo, foco, chamada principal da recepção) e o azul da placa Mercosul.
+ * Identidade AutoConfiança: grafite da oficina, azul do "A" e vermelho do "UT"/mostrador.
+ * Azul = estrutura, links e ação principal de formulário. Vermelho = destaque e chamada
+ * de atenção (recepção, novo agendamento). Papel quente no fundo, no lugar do cinza frio.
  */
 @theme {
-    --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif;
-    --font-placa: 'Barlow Condensed', 'Barlow', ui-sans-serif, sans-serif;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-placa: 'Barlow Condensed', 'Inter', ui-sans-serif, sans-serif;
 
-    --color-asfalto: #1f2a33;
-    --color-asfalto-2: #2c3a46;
-    --color-asfalto-3: #3d4d5b;
-    --color-fundo: #f3f4f6;
-    --color-linha: #dde1e6;
-    --color-texto: #1b2228;
-    --color-suave: #5e6a75;
-    --color-sinal: #f2a900;
-    --color-sinal-escuro: #b47d00;
+    --color-asfalto: #0e1116;
+    --color-asfalto-2: #191f27;
+    --color-asfalto-3: #2b3441;
+    --color-fundo: #f6f4f1;
+    --color-linha: #e3ded6;
+    --color-texto: #14171a;
+    --color-suave: #5e6570;
+    --color-sinal: #e11b22;
+    --color-sinal-escuro: #a6101a;
+    --color-marca: #0b4fb5;
+    --color-marca-2: #093f92;
+    --color-marca-claro: #e9effa;
     --color-placa: #003399;
     --color-ok: #1f7a46;
     --color-erro: #b4322a;
@@ -36,17 +40,19 @@
 @layer base {
     html { -webkit-text-size-adjust: 100%; }
     body { @apply bg-fundo text-texto font-sans antialiased; font-feature-settings: 'tnum' 1; }
-    :focus-visible { outline: 3px solid var(--color-sinal); outline-offset: 2px; }
+    ::selection { background: var(--color-marca-claro); color: var(--color-marca); }
+    :focus-visible { outline: 3px solid var(--color-marca); outline-offset: 2px; }
     h1 { @apply text-2xl font-semibold tracking-tight; }
     h2 { @apply text-lg font-semibold; }
+    a { text-underline-offset: 3px; }
     [x-cloak], [hidden] { display: none !important; }
 }
 
 @layer components {
-    .btn, .btn-primario, .btn-sinal, .btn-perigo { @apply inline-flex items-center justify-center gap-2 rounded-md border border-linha bg-white px-4 py-2.5 text-[15px] font-semibold text-texto transition-colors hover:border-asfalto-3 disabled:opacity-50; }
-    .btn-primario { @apply border-asfalto bg-asfalto text-white hover:bg-asfalto-2 hover:border-asfalto-2; }
-    .btn-sinal { @apply border-sinal bg-sinal text-asfalto hover:bg-[#ffb81a] hover:border-[#ffb81a]; }
-    .btn-perigo { @apply text-erro hover:border-erro; }
+    .btn, .btn-primario, .btn-sinal, .btn-perigo { @apply inline-flex items-center justify-center gap-2 rounded-md border border-linha bg-white px-4 py-2.5 text-[15px] font-semibold text-texto transition-colors hover:border-marca hover:text-marca disabled:opacity-50; }
+    .btn-primario { @apply border-marca bg-marca text-white hover:border-marca-2 hover:bg-marca-2 hover:text-white; }
+    .btn-sinal { @apply border-sinal bg-sinal text-white hover:border-sinal-escuro hover:bg-sinal-escuro hover:text-white; }
+    .btn-perigo { @apply text-erro hover:border-erro hover:text-erro; }
     .btn-sm { @apply px-3 py-1.5 text-sm; }
 
     .card { @apply rounded-lg border border-linha bg-white; }
@@ -54,15 +60,15 @@
 
     .campo { @apply block text-sm font-medium text-suave; }
     .campo > span { @apply mb-1.5 block; }
-    .input { @apply block w-full rounded-md border border-[#c9cfd6] bg-white px-3 py-2.5 text-[15px] text-texto placeholder:text-[#9aa4ad] focus:border-asfalto-3 focus:outline-none focus:ring-2 focus:ring-sinal/50; }
+    .input { @apply block w-full rounded-md border border-[#c9c3b9] bg-white px-3 py-2.5 text-[15px] text-texto placeholder:text-[#9c968c] focus:border-marca focus:outline-none focus:ring-2 focus:ring-marca/20; }
     .input-erro { @apply border-erro; }
     .erro-msg { @apply mt-1 text-sm text-erro; }
 
     .tabela { @apply w-full text-left text-[15px]; }
-    .tabela th { @apply border-b border-linha bg-[#f8f9fa] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-suave; }
+    .tabela th { @apply border-b border-linha bg-[#f1ede7] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-suave; }
     .tabela td { @apply border-b border-linha px-4 py-3 align-middle; }
     .tabela tr:last-child td { @apply border-b-0; }
-    .tabela tbody tr:hover td { @apply bg-[#fafbfc]; }
+    .tabela tbody tr:hover td { @apply bg-[#fbf9f6]; }
 
     .rotulo { @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold; }
 
@@ -74,4 +80,7 @@
     .placa-sm .placa-numero { @apply px-1.5 py-[3px] text-[15px]; }
     .placa-md .placa-faixa { @apply h-3.5 text-[8px]; }
     .placa-md .placa-numero { @apply py-1 text-2xl; }
+
+    /* Faixa fina da marca usada no topo de cartões de destaque */
+    .marca-faixa { background: linear-gradient(90deg, var(--color-marca) 0 72%, var(--color-sinal) 72% 100%); }
 }

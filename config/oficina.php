@@ -8,7 +8,8 @@
 return [
     'nome' => env('OFICINA_NOME', 'AutoConfiança'),
     'slogan' => env('OFICINA_SLOGAN', 'Mecânica, suspensão, freios e revisão'),
-    'dominio' => rtrim(env('APP_URL', 'https://confiancarev.com.br'), '/'),
+    // Site institucional (estático, na raiz do domínio). O sistema fica em APP_URL (…/sistema).
+    'dominio' => rtrim(env('OFICINA_SITE_URL', preg_replace('#/sistema/?$#', '', (string) env('APP_URL', 'https://confiancarev.com.br'))), '/'),
     'whatsapp' => env('OFICINA_WHATSAPP', ''),
     'telefone' => env('OFICINA_TELEFONE', '[Telefone]'),
     'endereco' => [

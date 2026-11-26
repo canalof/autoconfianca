@@ -29,6 +29,7 @@ jobs:
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'deploy' }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/var/www/autoconfianca' }}
+      PORTAL_PATH: ${{ secrets.PORTAL_PATH || '/var/www/autocentro' }}
     steps:
       - name: Conferir segredos
         id: segredos
@@ -107,8 +108,18 @@ jobs:
             --exclude='/.git/' --exclude='/.github/' --exclude='/.devcontainer/' \
             --exclude='/node_modules/' --exclude='/tests/' --exclude='/docs/' \
             --exclude='/storage/' --exclude='/public/storage' --exclude='/bootstrap/cache/' \
-            --exclude='/phpunit.xml' --exclude='/.phpunit.cache/' \
+            --exclude='/phpunit.xml' --exclude='/.phpunit.cache/' --exclude='/portal/' \
             ./ "servidor:$DEPLOY_PATH/"
+
+      # Site institucional estático (raiz do domínio). Os links que apontam para o
+      # sistema (sistema, build, favicon...) são criados na instalação e não são apagados.
+      - name: Enviar o site
+        if: steps.segredos.outputs.ok == 'true'
+        run: |
+          rsync -rlpz --delete --checksum --omit-dir-times --chmod=D2755,F644 \
+            --exclude='/sistema' --exclude='/build' --exclude='/site' --exclude='/storage' --exclude='/icons' \
+            --exclude='/favicon.ico' --exclude='/favicon.svg' --exclude='/manifest.webmanifest' \
+            portal/ "servidor:$PORTAL_PATH/"
 
       - name: Migrar banco e refazer caches
         if: steps.segredos.outputs.ok == 'true'
@@ -127,7 +138,11 @@ jobs:
           url=$(ssh servidor "grep -m1 '^APP_URL=' '$DEPLOY_PATH/.env' | cut -d= -f2- | tr -d '\"'\''\r'")
           code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$url/entrar" || true)
           echo "$url/entrar respondeu $code"
-          [ "$code" = "200" ] || { echo "::error::O site não respondeu 200 depois do deploy."; exit 1; }
+          [ "$code" = "200" ] || { echo "::error::O sistema não respondeu 200 depois do deploy."; exit 1; }
+          site=$(echo "$url" | sed -E 's#/sistema/?$##')
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$site/" || true)
+          echo "$site/ respondeu $code"
+          [ "$code" = "200" ] || { echo "::error::O site institucional não respondeu 200 depois do deploy."; exit 1; }
 
       # Falhou depois de entrar em manutenção: o site fica fora do ar de propósito
       # (o código novo pode não combinar com o banco). Veja docs/deploy.md, "Se o deploy falhar".

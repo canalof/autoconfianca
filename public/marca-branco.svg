@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 566 162" role="img" aria-label="AutoConfiança">
+  <g fill="#4C8DF6"><path d="M31 147 88 147 82 38Z"/><path d="M98 3H129L163 147H131Z"/></g>
+  <g fill="#FF2E36">
+    <g transform="translate(176 75) skewX(-9)"><text x="0" y="0" font-family="Archivo Black,Archivo,Impact,sans-serif" font-size="54" letter-spacing="1" textLength="86" lengthAdjust="spacingAndGlyphs">UT</text></g>
+    <circle cx="295" cy="59" r="24" fill="none" stroke="#FF2E36" stroke-width="9" stroke-dasharray="9.2 5.88"/>
+    <path d="M290 65 298 57" stroke="#FF2E36" stroke-width="6" stroke-linecap="round"/>
+    <rect x="302" y="44" width="7.4" height="7.4" rx="1.2" transform="rotate(-45 305.7 47.7)" fill="#FF2E36"/>
+  </g>
+  <rect x="31" y="89.6" width="529" height="3.4" fill="#F6F4F1"/>
+  <text x="187" y="134" font-family="Inter,system-ui,sans-serif" font-size="49" letter-spacing="10.5" fill="#F6F4F1" textLength="373" lengthAdjust="spacingAndGlyphs">CONFIAN&#199;A</text>
+</svg>

@@ -117,7 +117,7 @@ class AreaClienteController extends Controller
         $request->session()->forget('area_cliente');
         $request->session()->regenerate();
 
-        return redirect()->route('site.inicio');
+        return redirect()->away(config('oficina.dominio') ?: '/');
     }
 
     private function irParaPortal(int $id)

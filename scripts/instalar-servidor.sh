@@ -9,6 +9,7 @@ set -euo pipefail
 
 DOMINIO=confiancarev.com.br
 APP=/var/www/autoconfianca
+PORTAL=/var/www/autocentro   # site institucional estático; o sistema fica em /sistema
 REPO=git@github.com:canalof/autoconfianca.git
 BANCO=autoconfianca
 export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a COMPOSER_ALLOW_SUPERUSER=1
@@ -107,7 +108,8 @@ if [ ! -f .env ]; then
   }
   definir APP_ENV production
   definir APP_DEBUG false
-  definir APP_URL "https://$DOMINIO"
+  definir APP_URL "https://$DOMINIO/sistema"
+  definir OFICINA_SITE_URL "https://$DOMINIO"
   definir DB_CONNECTION mysql
   definir DB_HOST 127.0.0.1
   definir DB_PORT 3306
@@ -145,18 +147,27 @@ if [ -n "${EMAIL:-}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-passo "6/9 Nginx"
+passo "6/9 Nginx (site na raiz, sistema em /sistema)"
+mkdir -p "$PORTAL"
+rsync -a --exclude=/sistema --exclude=/build --exclude=/favicon.ico --exclude=/favicon.svg --exclude=/manifest.webmanifest "$APP/portal/" "$PORTAL/"
+ln -sfn "$APP/public" "$PORTAL/sistema"
+ln -sfn "$APP/public/build" "$PORTAL/build"
+ln -sfn "$APP/public/favicon.ico" "$PORTAL/favicon.ico"
+chown -R www-data:www-data "$PORTAL"
 cat > /etc/nginx/sites-available/autoconfianca <<EOF
 server {
     listen 80;
     listen [::]:80;
     server_name $DOMINIO www.$DOMINIO _;
-    root $APP/public;
-    index index.php;
+    root $PORTAL;
+    index index.html index.php;
     client_max_body_size 20m;
     server_tokens off;
 
-    location / { try_files \$uri \$uri/ /index.php?\$query_string; }
+    location = /sistema { return 301 /sistema/; }
+    location /sistema/ { try_files \$uri \$uri/ /sistema/index.php?\$query_string; }
+    location ~* \.webmanifest\$ { default_type application/manifest+json; expires 1h; }
+    location / { try_files \$uri \$uri/ =404; add_header Cache-Control "no-cache" always; }
     location ~ \.php\$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
@@ -212,8 +223,8 @@ cat <<EOF
 =====================================================================
 Instalado.
   Site:              http://$IP_MAQUINA   (e https://$DOMINIO quando o domínio apontar)
-  Área do cliente:   /area-do-cliente
-  Sistema:           /entrar
+  Área do cliente:   /sistema/area-do-cliente
+  Sistema:           /sistema/entrar
 Falta preencher no $APP/.env os dados da oficina (OFICINA_*) e do WhatsApp
 (EVOLUTION_URL, EVOLUTION_KEY). Depois: cd $APP && php artisan config:cache
 =====================================================================

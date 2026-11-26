@@ -65,7 +65,7 @@
                             @endif
                             @can('financeiro.editar')
                                 @if (in_array($c->provedor, ['aguardando_integracao', 'pix_manual'], true) && $c->status === 'pendente' && !$c->id_externo && !$c->txid && !$c->confirmado_em)
-                                    <form method="post" action="{{ route('pix.cancelar-rascunho', $c->id) }}" data-confirmar="Cancelar no TORQUE? Um QR Code já compartilhado ainda pode ser pago no banco.">
+                                    <form method="post" action="{{ route('pix.cancelar-rascunho', $c->id) }}" data-confirmar="Cancelar no sistema? Um QR Code já compartilhado ainda pode ser pago no banco.">
                                         @csrf
                                         <button class="btn-perigo btn-sm">Cancelar preparação</button>
                                     </form>

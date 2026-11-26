@@ -11,7 +11,8 @@ class SiteController extends Controller
 {
     public function inicio()
     {
-        return view('site.inicio');
+        // O site institucional é estático, servido na raiz do domínio.
+        return redirect()->away(config('oficina.dominio') ?: '/');
     }
 
     public function servico(string $slug)

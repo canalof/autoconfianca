@@ -76,7 +76,7 @@
         </form>
 
         <section class="card card-corpo space-y-3">
-            <h2>Consulta oficial no TORQUE</h2>
+            <h2>Consulta oficial no sistema</h2>
             <p class="text-sm">
                 Ambiente desta instalação:
                 <strong>{{ $ambienteConsulta['ambiente'] === 'producao' ? 'produção' : 'homologação' }}</strong>.

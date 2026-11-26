@@ -17,21 +17,16 @@ class SiteEAreaClienteTest extends TestCase
 
     private array $enviados = [];
 
-    public function test_site_publico_abre_sem_login(): void
+    public function test_site_institucional_e_estatico_e_o_sistema_exige_login(): void
     {
-        config(['oficina.nome' => 'AutoConfiança', 'oficina.endereco.cidade' => 'Campinas']);
-        $this->get('/')->assertOk()->assertSee('O que o seu carro está fazendo?')->assertSee('AutoConfiança')->assertSee('Área do cliente');
-        $this->get('/servicos/freios')->assertOk()->assertSee('Freios em Campinas');
-        $this->get('/servicos/nao-existe')->assertNotFound();
-        $this->get('/sitemap.xml')->assertOk()->assertSee('/servicos/suspensao');
-        $this->get('/robots.txt')->assertOk()->assertSee('Disallow: /sistema');
-    }
-
-    public function test_sistema_fica_em_barra_sistema_e_exige_login(): void
-    {
-        $this->get('/sistema')->assertRedirect('/entrar');
+        // O site fica fora do Laravel (pasta portal/, raiz do domínio); o sistema roda em /sistema.
+        config(['oficina.dominio' => 'https://confiancarev.com.br']);
+        $this->get('/institucional')->assertRedirect('https://confiancarev.com.br');
+        $this->assertFileExists(base_path('portal/index.html'));
+        $this->assertStringContainsString('Disallow: /sistema/', file_get_contents(base_path('portal/robots.txt')));
+        $this->get('/')->assertRedirect('/entrar');
         $u = $this->novaEmpresa();
-        $this->actingAs($u)->get('/entrar')->assertRedirect('/sistema');
+        $this->actingAs($u)->get('/entrar')->assertRedirect('/');
     }
 
     private function prepararWhats(): \App\Models\User
@@ -75,7 +70,7 @@ class SiteEAreaClienteTest extends TestCase
 
         // Já logado, "Área do cliente" leva direto ao portal; "Sair" encerra
         $this->get('/area-do-cliente')->assertRedirect('/cliente/'.$token);
-        $this->post('/area-do-cliente/sair')->assertRedirect('/');
+        $this->post('/area-do-cliente/sair')->assertRedirect(config('oficina.dominio'));
         $this->get('/area-do-cliente/entrar')->assertOk()->assertSee('Receber código');
     }
 

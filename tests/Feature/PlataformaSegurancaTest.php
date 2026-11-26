@@ -201,7 +201,7 @@ class PlataformaSegurancaTest extends TestCase
         $this->get('/redefinir-senha/'.$token.'?email=ana@oficina.com.br')->assertOk();
         $this->post('/redefinir-senha', ['token' => $token, 'email' => 'ana@oficina.com.br', 'password' => 'novasenha99', 'password_confirmation' => 'novasenha99'])
             ->assertRedirect('/entrar');
-        $this->post('/entrar', ['email' => 'ana@oficina.com.br', 'password' => 'novasenha99'])->assertRedirect('/sistema');
+        $this->post('/entrar', ['email' => 'ana@oficina.com.br', 'password' => 'novasenha99'])->assertRedirect('/');
     }
 
     public function test_totp_e_login_em_duas_etapas(): void
@@ -229,13 +229,13 @@ class PlataformaSegurancaTest extends TestCase
         $this->post('/entrar', ['email' => 'dono@oficina.com.br', 'password' => 'senha12345'])->assertRedirect('/entrar/codigo');
         $this->assertGuest();
         $this->post('/entrar/codigo', ['codigo' => '123456'])->assertSessionHasErrors('codigo');
-        $this->post('/entrar/codigo', ['codigo' => Totp::codigo($segredo)])->assertRedirect('/sistema');
+        $this->post('/entrar/codigo', ['codigo' => Totp::codigo($segredo)])->assertRedirect('/');
         $this->assertAuthenticatedAs($u);
 
         // código de recuperação funciona uma vez
         auth()->logout();
         $this->post('/entrar', ['email' => 'dono@oficina.com.br', 'password' => 'senha12345']);
-        $this->post('/entrar/codigo', ['codigo' => $codigos[0]])->assertRedirect('/sistema');
+        $this->post('/entrar/codigo', ['codigo' => $codigos[0]])->assertRedirect('/');
         auth()->logout();
         $this->post('/entrar', ['email' => 'dono@oficina.com.br', 'password' => 'senha12345']);
         $this->post('/entrar/codigo', ['codigo' => $codigos[0]])->assertSessionHasErrors('codigo');

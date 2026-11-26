@@ -18,7 +18,7 @@
             </form>
             <section class="card card-corpo space-y-3" data-documento-cnh>
                 <h2>Ler documento neste aparelho</h2>
-                <p>Fotografe a CNH ou selecione uma imagem ou o PDF da CNH digital. O TORQUE tenta ler CPF, validade, categoria e detectar o QR Code. Confira os dados antes de salvar ou registrar a conferência.</p>
+                <p>Fotografe a CNH ou selecione uma imagem ou o PDF da CNH digital. O sistema tenta ler CPF, validade, categoria e detectar o QR Code. Confira os dados antes de salvar ou registrar a conferência.</p>
                 <label class="campo"><span>Foto ou PDF da CNH</span><input class="input" type="file" accept="image/*,application/pdf"></label>
                 <p class="whitespace-pre-line text-sm text-suave" data-documento-resultado aria-live="polite">O arquivo e o QR Code não são enviados ao servidor nesta leitura.</p>
             </section>
