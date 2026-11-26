@@ -15,7 +15,7 @@ class Fornecedor extends Model
 
     protected $table = 'fornecedores';
 
-    protected $fillable = ['nome', 'cpf_cnpj', 'telefone', 'email', 'contato', 'cidade', 'uf', 'observacoes'];
+    protected $fillable = ['codigo_anterior', 'nome', 'cpf_cnpj', 'telefone', 'email', 'contato', 'cidade', 'uf', 'observacoes'];
 
     public function setCpfCnpjAttribute($v): void
     {

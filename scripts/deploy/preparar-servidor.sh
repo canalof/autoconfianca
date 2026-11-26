@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prepara o servidor para o deploy automático do Torque. Rodar UMA vez, como root:
 #   sudo bash preparar-servidor.sh [pasta] [dominio]
-# Padrão: /var/www/torque e torque.softmaxbr.com.br
+# Padrão: /var/www/autoconfianca e confiancarev.com.br
 #
 # O que faz:
 #  - cria o usuário "deploy" (sem senha, entra só com chave) no grupo www-data;
@@ -11,8 +11,8 @@
 #  - gera a chave SSH e mostra o que colar nos Segredos do GitHub (a chave privada é apagada do servidor em seguida).
 set -euo pipefail
 
-APP="${1:-/var/www/torque}"
-DOMINIO="${2:-torque.softmaxbr.com.br}"
+APP="${1:-/var/www/autoconfianca}"
+DOMINIO="${2:-confiancarev.com.br}"
 USUARIO=deploy
 PHPFPM=php8.3-fpm
 
@@ -78,7 +78,7 @@ sudo -u "$USUARIO" -H bash -c "cd '$APP' && php artisan --version" >/dev/null \
 cat <<EOF
 
 =====================================================================
-Pronto. Agora no GitHub: canalof/oficina > Settings > Secrets and
+Pronto. Agora no GitHub: canalof/autoconfianca > Settings > Secrets and
 variables > Actions > New repository secret. Crie estes 4 segredos:
 
 DEPLOY_HOST

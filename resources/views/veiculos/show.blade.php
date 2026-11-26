@@ -84,6 +84,13 @@
         @include('os._historico', ['ordens' => $veiculo->ordens()->with('itens')->limit(30)->get()])
     </section>
 
+    @php $anteriores = \App\Models\HistoricoOsAnterior::where('veiculo_id', $veiculo->id)->orderByDesc('data')->get(); @endphp
+    @if ($anteriores->isNotEmpty())
+        <section class="card mt-6">
+            @include('partials.historico-anterior', ['historico' => $anteriores, 'mostrarCliente' => true])
+        </section>
+    @endif
+
     @can('veiculos.excluir')
         <form method="post" action="{{ route('veiculos.destroy', $veiculo) }}" class="mt-8" data-confirmar="Excluir este veículo?">
             @csrf @method('delete')

@@ -19,8 +19,8 @@ Dá para rodar na mão: GitHub › **Actions** › **Deploy** › **Run workflow
 No servidor, como root:
 
 ```bash
-cd /tmp && curl -fsSLO https://raw.githubusercontent.com/canalof/oficina/main/scripts/deploy/preparar-servidor.sh
-sudo bash preparar-servidor.sh /var/www/torque torque.softmaxbr.com.br
+cd /tmp && curl -fsSLO https://raw.githubusercontent.com/canalof/autoconfianca/main/scripts/deploy/preparar-servidor.sh
+sudo bash preparar-servidor.sh /var/www/autoconfianca confiancarev.com.br
 ```
 
 (Com o repositório privado o `curl` não funciona: copie o arquivo pelo WinSCP ou cole o conteúdo com `nano`.)
@@ -34,7 +34,7 @@ O script cria o usuário `deploy` (sem senha), passa a pasta para ele (o PHP lê
 | `DEPLOY_KNOWN_HOSTS` | impressão digital do servidor (evita entrar num servidor falso) |
 | `DEPLOY_SSH_KEY` | chave privada do `deploy` |
 
-Opcionais: `DEPLOY_USER` (padrão `deploy`) e `DEPLOY_PATH` (padrão `/var/www/torque`).
+Opcionais: `DEPLOY_USER` (padrão `deploy`) e `DEPLOY_PATH` (padrão `/var/www/autoconfianca`).
 
 Sem os segredos o workflow só avisa e não envia nada.
 

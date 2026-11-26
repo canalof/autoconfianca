@@ -15,7 +15,7 @@ class Cliente extends Model
     use Auditavel, PertenceAEmpresa, SoftDeletes;
 
     protected $fillable = [
-        'tipo_pessoa', 'nome', 'cpf_cnpj', 'ie', 'telefone', 'whatsapp', 'aceita_whatsapp', 'email',
+        'codigo_anterior', 'tipo_pessoa', 'nome', 'cpf_cnpj', 'ie', 'telefone', 'whatsapp', 'aceita_whatsapp', 'email',
         'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'nascimento', 'observacoes',
     ];
 

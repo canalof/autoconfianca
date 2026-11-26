@@ -366,3 +366,83 @@ Schedule::command('torque:cnh-expurgar')->dailyAt('03:25')->withoutOverlapping()
 Schedule::command('torque:backup')->dailyAt('02:30')->withoutOverlapping();
 Schedule::command('torque:notas')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('torque:lembretes')->dailyAt('09:00')->withoutOverlapping();
+
+/*
+ * Importa a exportação do Oficina Inteligente (veja docs/importacao-oficina-inteligente.md).
+ * --simular roda tudo e desfaz no final, só para ver os totais e os relatórios.
+ */
+Artisan::command('autoconfianca:importar {pasta : pasta com Estoque_Completo, Clientes, Fornecedores e Contas_a_Receber (.xlsx)} {--os= : pasta com os OS_com_Itens_*.xlsx} {--simular}', function () {
+    $pasta = rtrim($this->argument('pasta'), '/');
+    $achar = function (string $dir, string $prefixo): ?string {
+        $xlsx = glob("{$dir}/{$prefixo}*.xlsx") ?: [];
+        if (! $xlsx && glob("{$dir}/{$prefixo}*.xls")) {
+            $this->error("{$prefixo}: o arquivo está em .xls. Converta para .xlsx (veja a documentação) e rode de novo.");
+        }
+
+        return $xlsx[0] ?? null;
+    };
+    $empresa = Empresa::query()->orderBy('id')->first();
+    if (! $empresa) {
+        $this->error('Crie a empresa antes (php artisan torque:empresa ...).');
+
+        return 1;
+    }
+    $osArquivos = [];
+    if ($dirOs = $this->option('os')) {
+        $osArquivos = glob(rtrim($dirOs, '/').'/OS_com_Itens*.xlsx') ?: [];
+        if (! $osArquivos) {
+            $this->error('Nenhum OS_com_Itens*.xlsx em '.$dirOs.(glob(rtrim($dirOs, '/').'/OS_com_Itens*.xls') ? ' (há arquivos .xls: converta para .xlsx).' : '.'));
+
+            return 1;
+        }
+    }
+    $imp = new \App\Services\Importacao\OficinaInteligente;
+    $simular = (bool) $this->option('simular');
+
+    try {
+        Tenant::com($empresa->id, function () use ($imp, $achar, $pasta, $osArquivos, $simular) {
+            DB::beginTransaction();
+            foreach (['produtos' => 'Estoque_Completo', 'clientes' => 'Clientes', 'fornecedores' => 'Fornecedores'] as $metodo => $prefixo) {
+                if ($arq = $achar($pasta, $prefixo)) {
+                    $this->line("Importando {$metodo}…");
+                    $imp->{$metodo}($arq);
+                }
+            }
+            if ($osArquivos) {
+                $this->line('Importando OS antigas e veículos ('.count($osArquivos).' arquivos)…');
+                $imp->ordensDeServico($osArquivos);
+            }
+            if ($arq = $achar($pasta, 'Contas_a_Receber')) {
+                $this->line('Importando contas a receber…');
+                $imp->contasAReceber($arq);
+            }
+            $simular ? DB::rollBack() : DB::commit();
+        });
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        $this->error('Nada foi gravado. Erro: '.$e->getMessage());
+
+        return 1;
+    }
+
+    $this->newLine();
+    $this->info($simular ? 'SIMULAÇÃO: nada foi gravado.' : 'Importação concluída.');
+    foreach ($imp->totais as $k => $v) {
+        $this->line(str_pad($k, 18).$v);
+    }
+    $dir = storage_path('app/importacao/'.now()->format('Y-m-d_His'));
+    @mkdir($dir, 0750, true);
+    $this->newLine();
+    $this->line('Relatórios para conferir (em '.$dir.'):');
+    foreach ($imp->relatorios as $nome => $linhas) {
+        $f = fopen("{$dir}/{$nome}.csv", 'w');
+        fwrite($f, "\xEF\xBB\xBF");
+        foreach ($linhas as $l) {
+            fputcsv($f, $l, ';');
+        }
+        fclose($f);
+        $this->line(str_pad($nome, 28).(count($linhas) - 1).' linha(s)');
+    }
+
+    return 0;
+})->purpose('Importa produtos, clientes, fornecedores, veículos, OS antigas e contas a receber do Oficina Inteligente');

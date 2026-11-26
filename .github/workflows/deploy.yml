@@ -28,7 +28,7 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'deploy' }}
-      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/var/www/torque' }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/var/www/autoconfianca' }}
     steps:
       - name: Conferir segredos
         id: segredos

@@ -1,6 +1,8 @@
-# Torque: convenções do projeto
+# AutoConfiança: convenções do projeto
 
-Sistema de gestão para autocenters (Laravel 13, PHP 8.3, Blade + Tailwind v4, MySQL em produção, SQLite nos testes).
+Site, área do cliente e sistema de gestão da oficina AutoConfiança (confiancarev.com.br), feito a partir do Torque. Sistema de **uma oficina só**, sem a parte SaaS (planos, assinatura, painel da plataforma). Laravel 13, PHP 8.3, Blade + Tailwind v4, MySQL em produção, SQLite nos testes.
+
+O isolamento por `empresa_id` continua (a oficina é a primeira empresa cadastrada) e os testes de isolamento continuam valendo.
 
 ## Regras que não podem ser quebradas
 
@@ -34,7 +36,10 @@ Tokens em `resources/css/app.css` (`asfalto`, `sinal`, `placa`...). Amarelo `sin
 - WhatsApp automático: `Services/WhatsApp` (Evolution API, opcional).
 - Agendador: `routes/console.php` (`torque:notas` a cada 5 min, `torque:lembretes` às 9h).
 - Em Blade, use sempre `@php ... @endphp` (não misture com `@php(...)` no mesmo arquivo).
-- Plataforma SaaS: `Services/Cobranca` (Asaas ou demonstração), middleware `VerificarAssinatura`, painel `/plataforma` (gate `plataforma` = admin + 2 etapas). O painel não abre dados internos das oficinas.
+- Site público: `SiteController` + `resources/views/site` + componente `<x-site>`; textos e dados em `config/oficina.php` (`OFICINA_*` no `.env`). Assets em `public/site/`. O sistema da equipe fica em `/sistema` (rota `painel`).
+- Área do cliente: `AreaClienteController` (`/area-do-cliente`): celular + código de 6 dígitos pelo WhatsApp (`WhatsApp::enviarSigiloso`, nunca grava o código), 10 min e 5 tentativas; depois abre o portal (`PortalClienteController`, `/cliente/{token}`). Mesma resposta com ou sem cadastro.
+- Importação do Oficina Inteligente: `Services/Importacao/OficinaInteligente` + `php artisan autoconfianca:importar` (`docs/importacao-oficina-inteligente.md`). Lê .xlsx com `Support/LeitorXlsx` (sem dependências). Não importa saldo de estoque. OS antigas ficam em `historico_os_anteriores` (só consulta). Dados reais nunca entram no repositório nem nos testes.
+- Instalação na máquina nova: `docs/instalacao.md`.
 - Orçamento: toda mudança de itens/desconto chama `OrdemServico::alterouOrcamento()` (versão). Aceite fica em `orcamento_aceites` (imutável, com hash).
 - Estoque: `movimentar()` grava `saldo_anterior` e recalcula o custo médio nas entradas com custo; telas exigem motivo. Origens: manual, compra, os, ajuste, perda, devolucao_cliente, devolucao_fornecedor.
 - Histórico de cadastro: `HistoricoController` lê a `auditoria`; para um model novo aparecer, inclua em `TIPOS` e os rótulos em `ROTULOS`.

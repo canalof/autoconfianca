@@ -88,6 +88,8 @@
                 @empty
                     <p class="px-4 py-4 text-sm text-suave">Nenhum serviço ainda.</p>
                 @endforelse
+                {{-- Só as OS antigas deste cliente: não mostra serviços de um dono anterior do carro --}}
+                @include('partials.historico-anterior', ['historico' => \App\Models\HistoricoOsAnterior::where('veiculo_id', $v->id)->where('cliente_id', $cliente->id)->orderByDesc('data')->get()])
             </section>
         @endforeach
     </main>
