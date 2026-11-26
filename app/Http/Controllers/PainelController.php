@@ -12,9 +12,6 @@ class PainelController extends Controller
 {
     public function __invoke()
     {
-        if (auth()->user()->admin_plataforma) {
-            return redirect()->route('plataforma.index');
-        }
         $inicioMes = now()->startOfMonth();
 
         return view('painel', [

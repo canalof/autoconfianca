@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
  * Cria um cliente novo do sistema (empresa + loja matriz + usuário dono).
  * Uso: php artisan torque:empresa "Autocenter Silva" dono@autocentersilva.com.br --cnpj=11222333000181 --nome="José Silva"
  */
-Artisan::command('torque:empresa {nome_fantasia} {email} {--cnpj=} {--nome=Responsável} {--senha=} {--plano=profissional}', function () {
+Artisan::command('torque:empresa {nome_fantasia} {email} {--cnpj=} {--nome=Responsável} {--senha=}', function () {
     $email = strtolower($this->argument('email'));
     if (User::where('email', $email)->exists()) {
         $this->error("Já existe usuário com o e-mail {$email}.");
@@ -36,8 +36,7 @@ Artisan::command('torque:empresa {nome_fantasia} {email} {--cnpj=} {--nome=Respo
     DB::transaction(function () use ($cnpj, $email, $senha) {
         $empresa = Empresa::create([
             'nome_fantasia' => $this->argument('nome_fantasia'), 'cnpj' => $cnpj,
-            'plano_id' => \App\Models\Plano::where('slug', $this->option('plano'))->value('id'),
-            'assinatura_status' => 'trial', 'trial_ate' => today()->addDays(Empresa::DIAS_TRIAL),
+            'assinatura_status' => 'ativa',
         ]);
         Categoria::criarPadroes($empresa->id);
         CategoriaServico::criarPadroes($empresa->id);
@@ -116,31 +115,6 @@ Artisan::command('torque:lembretes', function (\App\Services\WhatsApp\WhatsApp $
     }
     $this->info("{$enviados} mensagem(ns) enviada(s).");
 })->purpose('Envia lembretes de revisão e de agenda pelo WhatsApp');
-
-/*
- * Teste vencido e atraso de pagamento além da tolerância: suspende o acesso.
- */
-Artisan::command('torque:assinaturas', function (\App\Services\Cobranca\Assinaturas $a) {
-    $this->info($a->verificarVencimentos().' empresa(s) suspensa(s).');
-})->purpose('Suspende testes vencidos e assinaturas em atraso');
-
-/*
- * Cria (ou promove) o administrador da plataforma. Ele precisa ativar a verificação em duas etapas no primeiro acesso.
- */
-Artisan::command('torque:admin {email} {--nome=Administrador} {--senha=}', function () {
-    $email = strtolower($this->argument('email'));
-    $senha = $this->option('senha') ?: Str::password(14, symbols: false);
-    $u = User::where('email', $email)->first();
-    if (! $u) {
-        $empresa = Empresa::firstOrCreate(['nome_fantasia' => 'Torque (plataforma)'], ['assinatura_status' => 'ativa']);
-        $u = Tenant::com($empresa->id, fn () => User::create([
-            'empresa_id' => $empresa->id, 'name' => $this->option('nome'), 'email' => $email, 'perfil' => Perfil::Dono, 'ativo' => true, 'password' => $senha,
-        ]));
-        $this->line("Senha: {$senha}");
-    }
-    $u->forceFill(['admin_plataforma' => true])->save();
-    $this->info("{$email} é administrador da plataforma. No primeiro acesso, ele ativa a verificação em duas etapas.");
-})->purpose('Cria ou promove o administrador da plataforma');
 
 /*
  * Backup do banco (MySQL via mysqldump ou cópia do SQLite) em storage/app/backups, guardando os 30 mais recentes.
@@ -389,7 +363,6 @@ Artisan::command('torque:cnh-autoteste', function () {
 })->purpose('Autoteste do módulo CNH: ambiente, catálogo, dimensões e adaptadores (sem rede real e sem escrita no banco)');
 
 Schedule::command('torque:cnh-expurgar')->dailyAt('03:25')->withoutOverlapping();
-Schedule::command('torque:assinaturas')->dailyAt('03:10')->withoutOverlapping();
 Schedule::command('torque:backup')->dailyAt('02:30')->withoutOverlapping();
 Schedule::command('torque:notas')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('torque:lembretes')->dailyAt('09:00')->withoutOverlapping();

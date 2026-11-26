@@ -26,13 +26,9 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VeiculoController;
 use Illuminate\Support\Facades\Route;
 
-// Avisos do gateway de cobrança (sem login; conferidos pelo token)
-Route::post('/webhooks/asaas', [\App\Http\Controllers\WebhookCobrancaController::class, 'asaas'])->middleware('throttle:120,1')->name('webhooks.asaas');
 Route::view('/instalar', 'instalar')->name('instalar');
 
 Route::middleware('guest')->group(function () {
-    Route::get('/cadastro', [\App\Http\Controllers\CadastroController::class, 'form'])->name('cadastro');
-    Route::post('/cadastro', [\App\Http\Controllers\CadastroController::class, 'store'])->middleware('throttle:5,10')->name('cadastro.store');
     Route::get('/entrar', [AuthController::class, 'form'])->name('login');
     Route::post('/entrar', [AuthController::class, 'entrar'])->middleware('throttle:login')->name('login.entrar');
     Route::get('/entrar/codigo', [\App\Http\Controllers\DoisFatoresController::class, 'form'])->name('login.codigo');
@@ -227,24 +223,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:empresa.configurar')->group(function () {
         Route::get('/empresa', [EmpresaController::class, 'edit'])->name('empresa.edit');
         Route::put('/empresa', [EmpresaController::class, 'update'])->name('empresa.update');
-    });
-
-    Route::get('/assinatura', [\App\Http\Controllers\AssinaturaController::class, 'index'])->name('assinatura');
-    Route::post('/assinatura', [\App\Http\Controllers\AssinaturaController::class, 'assinar'])->middleware('throttle:10,1')->name('assinatura.assinar');
-
-    // Painel da plataforma (só admin da plataforma, com 2 etapas)
-    Route::middleware('can:plataforma')->prefix('plataforma')->name('plataforma.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\PlataformaController::class, 'index'])->name('index');
-        Route::get('/empresas/{empresa}', [\App\Http\Controllers\PlataformaController::class, 'empresa'])->name('empresa');
-        Route::put('/empresas/{empresa}', [\App\Http\Controllers\PlataformaController::class, 'atualizarEmpresa'])->name('empresa.update');
-        Route::put('/empresas/{empresa}/dados', [\App\Http\Controllers\PlataformaController::class, 'atualizarDados'])->name('empresa.dados');
-        Route::post('/empresas/{empresa}/liberar', [\App\Http\Controllers\PlataformaController::class, 'liberarCadastro'])->name('empresa.liberar');
-        Route::post('/empresas/{empresa}/cobrancas', [\App\Http\Controllers\PlataformaController::class, 'registrarCobranca'])->name('empresa.cobrancas.store');
-        Route::post('/empresas/{empresa}/cobrancas/{fatura}/confirmar', [\App\Http\Controllers\PlataformaController::class, 'confirmarCobranca'])->whereNumber('fatura')->name('empresa.cobrancas.confirmar');
-        Route::get('/planos', [\App\Http\Controllers\PlataformaController::class, 'planos'])->name('planos');
-        Route::post('/planos', [\App\Http\Controllers\PlataformaController::class, 'salvarPlano'])->name('planos.store');
-        Route::put('/planos/{plano}', [\App\Http\Controllers\PlataformaController::class, 'salvarPlano'])->name('planos.update');
-        Route::get('/webhooks', [\App\Http\Controllers\PlataformaController::class, 'webhooks'])->name('webhooks');
     });
 
     Route::get('/conta/seguranca', [\App\Http\Controllers\DoisFatoresController::class, 'seguranca'])->name('seguranca');

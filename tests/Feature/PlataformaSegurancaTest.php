@@ -7,7 +7,6 @@ use App\Models\Caixa;
 use App\Models\Cliente;
 use App\Models\ContaReceber;
 use App\Models\Empresa;
-use App\Models\FaturaPlataforma;
 use App\Models\OrcamentoAceite;
 use App\Models\OrdemServico;
 use App\Models\Plano;
@@ -243,106 +242,6 @@ class PlataformaSegurancaTest extends TestCase
     }
 
     // ---------- Plataforma SaaS ----------
-
-    public function test_cadastro_cria_oficina_em_teste_e_bloqueia_quando_vence(): void
-    {
-        $this->post('/cadastro', [
-            'oficina' => 'Auto Mecânica Silva', 'nome' => 'José Silva', 'telefone' => '(19) 99999-0000', 'email' => 'jose@silva.com.br',
-            'password' => 'senha12345', 'password_confirmation' => 'senha12345', 'plano' => 'essencial', 'aceite' => 1,
-        ])->assertRedirect('/entrar');
-        $u = User::where('email', 'jose@silva.com.br')->first();
-        $e = $u->empresa;
-
-        // cadastro fica aguardando liberação do admin da plataforma
-        $this->assertSame([Empresa::CADASTRO_PENDENTE, false], [$e->assinatura_status, (bool) $e->ativo]);
-        $admin = $this->novaEmpresa('Torque (plataforma)');
-        $admin->forceFill(['admin_plataforma' => true, 'dois_fatores_segredo' => Totp::novoSegredo(), 'dois_fatores_ativo_em' => now()])->save();
-        $this->actingAs($admin)->post('/plataforma/empresas/'.$e->id.'/liberar')->assertSessionHas('ok');
-        $this->actingAs($u);
-        $e->refresh();
-        $this->assertSame(['trial', 'essencial', Perfil::Dono], [$e->assinatura_status, $e->plano->slug, $u->perfil]);
-        $this->assertSame(Empresa::DIAS_TRIAL, $e->diasDeTeste());
-        $this->get('/os')->assertOk();
-
-        $this->travel(Empresa::DIAS_TRIAL + 1)->days();
-        $this->get('/os')->assertRedirect('/assinatura');
-        $this->get('/assinatura')->assertOk()->assertSee('O teste grátis terminou');
-        $this->artisan('torque:assinaturas')->assertSuccessful();
-        $this->assertSame('suspensa', $e->fresh()->assinatura_status);
-
-        // assinar em modo demonstração reativa
-        $this->post('/assinatura', ['plano' => 'profissional'])->assertSessionHas('ok');
-        $this->assertSame(['ativa', 'profissional'], [$e->fresh()->assinatura_status, $e->fresh()->plano->slug]);
-        $this->get('/os')->assertOk();
-    }
-
-    public function test_limite_de_usuarios_do_plano(): void
-    {
-        $u = $this->novaEmpresa();
-        Empresa::whereKey($u->empresa_id)->update(['plano_id' => Plano::where('slug', 'essencial')->value('id')]);
-        $this->usuarioNaMesmaEmpresa($u, Perfil::Mecanico);
-        $this->usuarioNaMesmaEmpresa($u, Perfil::Consultor);
-        $this->actingAs($u)->post('/usuarios', ['name' => 'Quarto', 'email' => 'q@x.com', 'perfil' => 'mecanico', 'password' => 'senha12345', 'ativo' => 1])
-            ->assertSessionHas('erro');
-        $this->assertSame(3, User::where('empresa_id', $u->empresa_id)->count());
-    }
-
-    public function test_webhook_asaas_autentica_e_e_idempotente(): void
-    {
-        config(['cobranca.asaas.webhook_token' => 'segredo-webhook']);
-        $u = $this->novaEmpresa();
-        Empresa::whereKey($u->empresa_id)->update(['cobranca_assinatura_id' => 'sub_123', 'assinatura_status' => 'trial']);
-        $evento = ['id' => 'evt_1', 'event' => 'PAYMENT_RECEIVED', 'payment' => ['id' => 'pay_1', 'subscription' => 'sub_123', 'value' => 279.0, 'dueDate' => '2026-11-20', 'invoiceUrl' => 'https://asaas/i/1']];
-
-        $this->postJson('/webhooks/asaas', $evento)->assertStatus(401);
-        $this->postJson('/webhooks/asaas', $evento, ['asaas-access-token' => 'errado'])->assertStatus(401);
-        $this->postJson('/webhooks/asaas', $evento, ['asaas-access-token' => 'segredo-webhook'])->assertOk();
-        $this->postJson('/webhooks/asaas', $evento, ['asaas-access-token' => 'segredo-webhook'])->assertOk(); // repetido
-
-        $e = Empresa::find($u->empresa_id);
-        $this->assertSame(['ativa', '2026-12-20'], [$e->assinatura_status, $e->proximo_vencimento->toDateString()]);
-        $faturas = $this->em($u, fn () => FaturaPlataforma::all());
-        $this->assertCount(1, $faturas);
-        $this->assertSame([27900, 'paga'], [$faturas[0]->valor_centavos, $faturas[0]->status]);
-
-        $atraso = ['id' => 'evt_2', 'event' => 'PAYMENT_OVERDUE', 'payment' => ['id' => 'pay_2', 'subscription' => 'sub_123', 'value' => 279.0, 'dueDate' => now()->subDays(10)->toDateString()]];
-        $this->postJson('/webhooks/asaas', $atraso, ['asaas-access-token' => 'segredo-webhook'])->assertOk();
-        $this->assertSame('inadimplente', $e->fresh()->assinatura_status);
-        $this->artisan('torque:assinaturas');
-        $this->assertSame('suspensa', $e->fresh()->assinatura_status);
-    }
-
-    public function test_assinatura_pelo_asaas_envia_dados_certos(): void
-    {
-        config(['cobranca.provedor' => 'asaas', 'cobranca.asaas.chave' => 'chave-asaas', 'cobranca.asaas.url' => 'https://api-sandbox.asaas.com/v3']);
-        Http::fake([
-            '*/customers' => Http::response(['id' => 'cus_9'], 200),
-            '*/subscriptions' => Http::response(['id' => 'sub_9'], 200),
-        ]);
-        $u = $this->novaEmpresa();
-        $this->actingAs($u)->post('/assinatura', ['plano' => 'rede'])->assertSessionHas('ok');
-
-        Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/subscriptions') && $r->hasHeader('access_token', 'chave-asaas')
-            && $r['customer'] === 'cus_9' && $r['value'] == 449.0 && $r['cycle'] === 'MONTHLY' && $r['externalReference'] === 'empresa:'.$u->empresa_id);
-        $e = $u->empresa->fresh();
-        $this->assertSame(['cus_9', 'sub_9', 'trial'], [$e->cobranca_cliente_id, $e->cobranca_assinatura_id, $e->assinatura_status]);
-    }
-
-    public function test_painel_da_plataforma_exige_admin_com_duas_etapas(): void
-    {
-        $dono = $this->novaEmpresa();
-        $this->actingAs($dono)->get('/plataforma')->assertForbidden();
-
-        $admin = $this->novaEmpresa('Torque (plataforma)');
-        $admin->forceFill(['admin_plataforma' => true])->save();
-        $this->actingAs($admin)->get('/plataforma')->assertRedirect('/conta/seguranca');
-
-        $admin->forceFill(['dois_fatores_segredo' => Totp::novoSegredo(), 'dois_fatores_ativo_em' => now()])->save();
-        $this->actingAs($admin)->get('/plataforma')->assertOk()->assertSee('Oficina Teste');
-        $this->get('/plataforma/empresas/'.$dono->empresa_id)->assertOk();
-        $this->put('/plataforma/empresas/'.$dono->empresa_id, ['plano_id' => Plano::first()->id, 'assinatura_status' => 'suspensa', 'ativo' => 1])->assertSessionHas('ok');
-        $this->actingAs($dono->fresh())->get('/os')->assertRedirect('/assinatura');
-    }
 
     // ---------- Portal do cliente ----------
 

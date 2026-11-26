@@ -1,7 +1,4 @@
 <x-app titulo="Tutorial">
-    @can('plataforma')
-        @include('plataforma.ajuda')
-    @else
     <h1>Tutorial do TORQUE</h1>
     <p class="mb-4 text-suave">Guia da equipe da oficina, do primeiro acesso ao fechamento do caixa.</p>
     <nav class="mb-6 flex flex-wrap gap-2" aria-label="Tópicos do tutorial">
@@ -15,14 +12,14 @@
         <a class="btn btn-sm" href="#conciliacao">Conciliação</a>
         <a class="btn btn-sm" href="#notas-fiscais">Notas fiscais</a>
         <a class="btn btn-sm" href="#instalar-app">App no celular</a>
-        <a class="btn btn-sm" href="#assinatura-suporte">Assinatura e suporte</a>
+        <a class="btn btn-sm" href="#acesso-suporte">Ajuda com o acesso</a>
     </nav>
 
     <div class="mb-5 space-y-4">
         <section id="primeiro-acesso" class="card card-corpo">
             <h2>Primeiro acesso e equipe</h2>
             <ol class="mt-3 list-decimal space-y-2 pl-5">
-                <li>Preencha o cadastro público da oficina e aguarde a liberação pelo administrador do TORQUE. Depois, entre com o e-mail e a senha escolhidos no cadastro.</li>
+                <li>Entre com o e-mail e a senha que o responsável pela oficina criou para você.</li>
                 <li>Na conta da oficina, abra <strong>Empresa</strong> para conferir identificação, endereço, contato e regras como capacidade da Agenda.</li>
                 <li>Em <strong>Usuários → Novo usuário</strong>, informe nome, e-mail e senha inicial. Escolha o perfil adequado, como <strong>Consultor / recepção</strong>, <strong>Mecânico</strong>, <strong>Caixa</strong> ou <strong>Estoquista</strong>, e mantenha <strong>Acesso ativo</strong> marcado para quem precisa entrar.</li>
                 <li>Use uma conta por pessoa. Para trocar o próprio acesso, use <strong>Senha</strong> no menu. Para alterar o perfil ou desativar alguém, use <strong>Usuários → Editar</strong>.</li>
@@ -180,12 +177,9 @@
             </ol>
             @can('caixa.operar')<a class="btn btn-sm mt-3" href="{{ route('caixa.index') }}">Abrir Caixa</a>@endcan
         </li>
-        <li id="assinatura-suporte" class="card card-corpo">
-            <h2>11. Assinatura e ajuda com o acesso</h2>
-            <p class="mt-2">Em <strong>Assinatura</strong>, o responsável consulta plano, situação, prazo de teste e faturas. Quando houver fatura aberta, use <strong>Pagar</strong> para abrir o link do banco ou provedor. Se o pagamento for confirmado manualmente, fale com o administrador do TORQUE para acompanhar a liberação.</p>
-            <p class="mt-2">Se alguém da equipe esquecer a senha, o responsável pode definir uma nova em <strong>Usuários → Editar</strong>. Se quem perdeu o acesso foi o próprio responsável e o e-mail de recuperação não chegar, contate o administrador do TORQUE pelo canal combinado com a oficina.</p>
-            @can('empresa.configurar')<a class="btn btn-sm mt-3" href="{{ route('assinatura') }}">Abrir Assinatura</a>@endcan
+        <li id="acesso-suporte" class="card card-corpo">
+            <h2>11. Ajuda com o acesso</h2>
+            <p class="mt-2">Se alguém da equipe esquecer a senha, o responsável pode definir uma nova em <strong>Usuários → Editar</strong>. Se quem perdeu o acesso foi o próprio responsável e o e-mail de recuperação não chegar, fale com o suporte técnico do sistema.</p>
         </li>
     </ol>
-    @endcan
 </x-app>

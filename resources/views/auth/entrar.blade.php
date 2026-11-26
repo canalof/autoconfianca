@@ -54,7 +54,6 @@
             <button class="btn-primario w-full py-3">Entrar</button>
             <div class="mt-5 flex flex-wrap justify-between gap-3 text-[15px]">
                 <a href="{{ route('password.request') }}" class="font-semibold text-asfalto-3 hover:underline">Esqueci a senha</a>
-                <a href="{{ route('cadastro') }}" class="font-semibold text-asfalto-3 hover:underline">Cadastrar minha oficina</a>
                 <a href="{{ route('instalar') }}" class="font-semibold text-asfalto-3 hover:underline">Instalar no celular</a>
             </div>
         </form>

@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [DefinirEmpresa::class, \App\Http\Middleware\ExigirDoisFatores::class, \App\Http\Middleware\VerificarAssinatura::class]);
+        $middleware->web(append: [DefinirEmpresa::class, \App\Http\Middleware\ExigirDoisFatores::class]);
         // A empresa precisa estar definida antes do route model binding,
         // senão /clientes/{cliente} buscaria sem o filtro de empresa (e daria 404).
         $middleware->prependToPriorityList(
