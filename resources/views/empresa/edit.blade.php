@@ -1,0 +1,96 @@
+<x-app titulo="Empresa">
+    <h1 class="mb-1">Dados da empresa</h1>
+    <p class="mb-5 text-suave">Aparecem nos orçamentos, nas ordens de serviço e nas notas fiscais.</p>
+    <form method="post" data-avisar-saida action="{{ route('empresa.update') }}" class="max-w-3xl space-y-6">
+        @csrf @method('put')
+        <section class="card card-corpo">
+            <h2 class="mb-4">Identificação e endereço</h2>
+            <div class="grid gap-4 md:grid-cols-6">
+                <x-campo nome="nome_fantasia" rotulo="Nome fantasia" :valor="$empresa->nome_fantasia" required class="md:col-span-3" />
+                <x-campo nome="razao_social" rotulo="Razão social" :valor="$empresa->razao_social" class="md:col-span-3" />
+                <x-campo nome="cnpj" rotulo="CNPJ" :valor="$empresa->cnpj ? \App\Support\Documento::formatar($empresa->cnpj) : null" mascara="documento" class="md:col-span-2" />
+                <x-campo nome="telefone" rotulo="Telefone" :valor="$empresa->telefone" mascara="telefone" class="md:col-span-2" />
+                <x-campo nome="email" rotulo="E-mail" tipo="email" :valor="$empresa->email" class="md:col-span-2" />
+                <x-campo nome="cep" rotulo="CEP" :valor="$empresa->cep ? substr($empresa->cep, 0, 5).'-'.substr($empresa->cep, 5) : ''" mascara="cep" class="md:col-span-2" />
+                <x-campo nome="logradouro" rotulo="Rua" :valor="$empresa->logradouro" class="md:col-span-3" />
+                <x-campo nome="numero" rotulo="Número" :valor="$empresa->numero" class="md:col-span-1" />
+                <x-campo nome="bairro" rotulo="Bairro" :valor="$empresa->bairro" class="md:col-span-2" />
+                <x-campo nome="cidade" rotulo="Cidade" :valor="$empresa->cidade" class="md:col-span-3" />
+                <x-campo nome="uf" rotulo="UF" :valor="$empresa->uf" maxlength="2" class="md:col-span-1" />
+            </div>
+        </section>
+
+        <section class="card card-corpo" id="modulos">
+            <h2 class="mb-1">Módulos</h2>
+            <p class="mb-4 text-sm text-suave">Ligue só o que a oficina usa. Desligado, o item some do menu e das telas; os dados ficam guardados e voltam quando você ligar de novo.</p>
+            <input type="hidden" name="modulos_enviados" value="1">
+            <div class="space-y-3">
+                @foreach (\App\Models\Empresa::MODULOS as $chave => [$nome, $descricao])
+                    <label class="flex items-start gap-3 text-[15px]">
+                        <input type="checkbox" name="modulos[]" value="{{ $chave }}" class="mt-1 h-4 w-4 accent-asfalto" @checked($empresa->temModulo($chave))>
+                        <span><strong>{{ $nome }}</strong><br><span class="text-sm text-suave">{{ $descricao }}</span></span>
+                    </label>
+                @endforeach
+            </div>
+        </section>
+
+        <section class="card card-corpo">
+            <h2 class="mb-4">Regras da oficina</h2>
+            <div class="grid gap-4 md:grid-cols-2">
+                <x-campo nome="orcamento_validade_dias" rotulo="Validade do link do orçamento (dias)" tipo="number" min="1" max="90" :valor="$empresa->orcamento_validade_dias" />
+                <x-campo nome="agenda_capacidade" rotulo="Carros atendidos ao mesmo tempo (boxes/elevadores)" tipo="number" min="1" max="50" :valor="$empresa->agenda_capacidade" ajuda="A agenda avisa quando passar disso" />
+                <label class="flex items-start gap-2 text-[15px] md:col-span-2"><input type="hidden" name="estoque_negativo" value="0"><input type="checkbox" name="estoque_negativo" value="1" class="mt-1 h-4 w-4 accent-asfalto" @checked($empresa->estoque_negativo)> <span>Permitir entregar carro com peça sem saldo no estoque (o estoque fica negativo até a nota de compra entrar)</span></label>
+            </div>
+        </section>
+
+        @if ($empresa->temModulo('fiscal'))
+        <section class="card card-corpo">
+            <h2 class="mb-1">Dados fiscais</h2>
+            <p class="mb-4 text-sm text-suave">Usados para emitir NFS-e, NFC-e e NF-e. <strong>Confira com o seu contador</strong> antes de emitir em produção.</p>
+            <div class="grid gap-4 md:grid-cols-6">
+                <x-campo nome="inscricao_estadual" rotulo="Inscrição estadual" :valor="$empresa->inscricao_estadual" class="md:col-span-2" />
+                <x-campo nome="inscricao_municipal" rotulo="Inscrição municipal" :valor="$empresa->inscricao_municipal" class="md:col-span-2" />
+                <x-campo nome="codigo_municipio" rotulo="Código do município (IBGE)" :valor="$empresa->codigo_municipio" inputmode="numeric" maxlength="7" ajuda="7 dígitos. Hortolândia/SP = 3519071" class="md:col-span-2" />
+                <label class="campo md:col-span-2"><span>Regime tributário</span>
+                    <select name="regime_tributario" class="input">
+                        @foreach ([1 => 'Simples Nacional', 2 => 'Simples (excesso de sublimite)', 3 => 'Regime normal'] as $v => $r)
+                            <option value="{{ $v }}" @selected((int) old('regime_tributario', $empresa->regime_tributario) === $v)>{{ $r }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <x-campo nome="cfop_padrao" rotulo="CFOP das peças" :valor="$empresa->cfop_padrao" maxlength="4" ajuda="Ex.: 5102 ou 5405 (peça com ST)" class="md:col-span-2" />
+                <x-campo nome="csosn_padrao" rotulo="CSOSN (Simples)" :valor="$empresa->csosn_padrao" maxlength="3" ajuda="Ex.: 102 ou 500" class="md:col-span-2" />
+                <x-campo nome="item_lista_servico" rotulo="Item da lista de serviço" :valor="$empresa->item_lista_servico" ajuda="Oficinas: normalmente 14.01" class="md:col-span-2" />
+                <x-campo nome="aliquota_iss" rotulo="Alíquota do ISS (%)" :valor="rtrim(rtrim((string) $empresa->aliquota_iss, '0'), '.')" inputmode="decimal" class="md:col-span-2" />
+                <label class="campo md:col-span-2"><span>Ambiente</span>
+                    <select name="fiscal_ambiente" class="input">
+                        <option value="homologacao" @selected($empresa->fiscal_ambiente === 'homologacao')>Homologação (teste)</option>
+                        <option value="producao" @selected($empresa->fiscal_ambiente === 'producao')>Produção (vale de verdade)</option>
+                    </select>
+                </label>
+                <label class="campo md:col-span-6"><span>Token da Focus NFe</span>
+                    <input type="password" name="fiscal_token" class="input" autocomplete="off" placeholder="{{ $empresa->fiscal_token ? 'Token salvo. Digite para trocar.' : 'Sem token: as notas saem em modo demonstração' }}">
+                </label>
+                @if ($empresa->fiscal_token)
+                    <label class="flex items-center gap-2 text-[15px] md:col-span-6"><input type="checkbox" name="remover_token" value="1" class="h-4 w-4 accent-asfalto"> Remover token (volta para demonstração)</label>
+                @endif
+            </div>
+            <a href="{{ route('tutorial') }}#notas-fiscais" class="btn btn-sm mt-4">Ver tutorial de notas fiscais</a>
+        </section>
+        @else
+            {{-- Notas fiscais desligadas: mantém os dados fiscais como estão. --}}
+            @foreach (['inscricao_estadual', 'inscricao_municipal', 'codigo_municipio', 'regime_tributario', 'cfop_padrao', 'csosn_padrao', 'item_lista_servico', 'aliquota_iss', 'fiscal_ambiente'] as $campoFiscal)
+                <input type="hidden" name="{{ $campoFiscal }}" value="{{ $empresa->$campoFiscal }}">
+            @endforeach
+        @endif
+
+        <section class="card card-corpo">
+            <h2 class="mb-1">WhatsApp automático</h2>
+            <p class="mb-4 text-sm text-suave">Opcional. Com a Evolution API configurada no servidor, lembretes de revisão e confirmações de agenda saem sozinhos. Sem isso, o sistema abre o WhatsApp com a mensagem pronta.</p>
+            <x-campo nome="whatsapp_instancia" rotulo="Nome da instância na Evolution API" :valor="$empresa->whatsapp_instancia" class="max-w-sm" />
+            @if (! config('whatsapp.url'))<p class="mt-2 text-sm text-suave">O servidor ainda não tem EVOLUTION_URL e EVOLUTION_KEY no .env.</p>@endif
+        </section>
+
+        <button class="btn-primario">Salvar dados da empresa</button>
+    </form>
+</x-app>

@@ -1,0 +1,50 @@
+# Matriz de permissões
+
+Gerada a partir de `App\Support\Perfil::permissoes()`. Regra: negado por padrão; cada tela confere a permissão no servidor.
+
+| Permissão | Dono | Gerente | Consultor / recepção | Mecânico | Caixa | Estoquista |
+|---|---|---|---|---|---|---|
+| Ver clientes (`clientes.ver`) | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+| Cadastrar/editar clientes (`clientes.editar`) | ✓ | ✓ | ✓ |  | ✓ |  |
+| Excluir clientes (`clientes.excluir`) | ✓ | ✓ |  |  |  |  |
+| Ver veículos (`veiculos.ver`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Cadastrar/editar veículos (`veiculos.editar`) | ✓ | ✓ | ✓ |  |  |  |
+| Excluir veículos (`veiculos.excluir`) | ✓ | ✓ |  |  |  |  |
+| Consultar placa (custo) (`placa.consultar`) | ✓ | ✓ | ✓ |  |  |  |
+| Usuários (`usuarios.gerenciar`) | ✓ | ✓ |  |  |  |  |
+| Dados da empresa, fiscais e assinatura (`empresa.configurar`) | ✓ |  |  |  |  |  |
+| Auditoria (`auditoria.ver`) | ✓ | ✓ |  |  |  |  |
+| Ver OS (`os.ver`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Abrir OS, orçamento, aprovação no balcão, entregar (`os.editar`) | ✓ | ✓ | ✓ |  |  |  |
+| Diagnóstico, fotos, iniciar e concluir (`os.executar`) | ✓ | ✓ | ✓ | ✓ |  |  |
+| Cancelar/reabrir OS, remover item aprovado (`os.cancelar`) | ✓ | ✓ |  |  |  |  |
+| Catálogo de serviços (`servicos.gerenciar`) | ✓ | ✓ |  |  |  |  |
+| Ver estoque (`estoque.ver`) | ✓ | ✓ | ✓ | ✓ |  | ✓ |
+| Produtos e ajustes de estoque (`estoque.editar`) | ✓ | ✓ |  |  |  | ✓ |
+| Importar notas de compra e fornecedores (`compras.lancar`) | ✓ | ✓ |  |  |  | ✓ |
+| Caixa e recebimentos (`caixa.operar`) | ✓ | ✓ | ✓ |  | ✓ |  |
+| Ver contas, resumo e exportar (`financeiro.ver`) | ✓ | ✓ |  |  | ✓ |  |
+| Lançar/pagar contas, estornar (`financeiro.editar`) | ✓ | ✓ |  |  | ✓ |  |
+| Ver comissões (`comissoes.ver`) | ✓ | ✓ |  |  |  |  |
+| Emitir/cancelar notas fiscais (`notas.emitir`) | ✓ | ✓ | ✓ |  | ✓ |  |
+| Ver agenda e lembretes (`agenda.ver`) | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+| Agendar e enviar lembretes (`agenda.editar`) | ✓ | ✓ | ✓ |  | ✓ |  |
+| Condutores, CNH e retirada: ver e registrar (`mobilidade.ver`, `mobilidade.editar`) | ✓ | ✓ | ✓ |  |  |  |
+| Retirada com exceção, regras e modelos da retirada (`mobilidade.excecao`) | ✓ | ✓ |  |  |  |  |
+| Locação: ver, reservar, saída e devolução (`locacao.ver`, `locacao.editar`)* | ✓ | ✓ | ✓ |  |  |  |
+| Locação: modelos de contrato (`locacao.excecao`)* | ✓ | ✓ |  |  |  |  |
+
+\* Só com o módulo de Locação ligado na empresa (Empresa → Usar o módulo de Locação). Desligado, ninguém vê a Locação, nem o dono.
+
+**Administrador da plataforma** (`users.admin_plataforma`): acessa só o painel /plataforma (oficinas, planos, avisos do gateway), com verificação em duas etapas obrigatória. Não vê clientes, OS nem financeiro das oficinas.
+
+## Cadastros, estoque e histórico (versão 1.2)
+
+- **Ver histórico** de um cadastro ou OS: `auditoria.ver` (dono e gerente). Só mostra registros da própria oficina.
+- **Corrigir item da OS** já lançado: `os.editar`, enquanto a OS aceita itens. Se a quantidade ou o valor de um item aprovado mudar, ele volta para aprovação do cliente.
+- **Categorias e fabricantes**: ver com `estoque.ver`, cadastrar/renomear/inativar com `estoque.editar`.
+- **Entrada, perda, devolução e contagem de estoque**: `estoque.editar`, sempre com motivo.
+- **Balanço de estoque**: aplicar, baixar e enviar a planilha com `estoque.editar`; ver os balanços feitos com `estoque.ver`.
+- **Importar planilha**: clientes com `clientes.editar`; produtos com `estoque.editar`.
+- **Exportar planilha** (leva a base inteira, com CPF/CNPJ): clientes com `clientes.editar`, veículos com `veiculos.editar`, produtos com `estoque.editar`, fornecedores com `compras.lancar`. Quem só consulta (ex.: mecânico) não exporta.
+
