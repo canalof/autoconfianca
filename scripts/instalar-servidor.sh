@@ -11,7 +11,7 @@ DOMINIO=confiancarev.com.br
 APP=/var/www/autoconfianca
 REPO=git@github.com:canalof/autoconfianca.git
 BANCO=autoconfianca
-export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a COMPOSER_ALLOW_SUPERUSER=1
 
 passo() { echo; echo "== $*"; }
 [ "$(id -u)" = 0 ] || { echo "Rode como root (sudo bash instalar-servidor.sh)."; exit 1; }
