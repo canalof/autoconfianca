@@ -53,21 +53,46 @@ class LocacaoController extends Controller
         return response()->view('locacao.index', [
             'os' => $os, 'cliente' => $cliente, 'modalidade' => $modalidade, 'situacao' => $situacao,
             'reservas' => $reservas,
-            'frota' => $frota,
             'resumo' => [
                 'disponiveis' => $frota->where('situacao', 'disponivel')->whereNotIn('id', $emUso)->count(),
                 'emUso' => $emUso->count(),
                 'saemHoje' => MobilidadeReserva::where('status', 'reservada')->whereDate('inicio', today())->count(),
                 'voltamHoje' => MobilidadeReserva::where('status', 'entregue')->whereDate('fim', '<=', today())->count(),
             ],
-            'ordens' => OrdemServico::with(['cliente', 'veiculo'])->whereIn('status', array_map(fn ($s) => $s->value, StatusOs::doPatio()))
-                ->latest('id')->limit(100)->get(),
-            'clientes' => Cliente::orderBy('nome')->limit(500)->get(['id', 'nome']),
-            'condutores' => MobilidadeCondutor::orderBy('nome')->get(['id', 'nome', 'categoria', 'validade']),
-            'fotosReserva' => MobilidadeFoto::whereIn('reserva_id', $reservas->getCollection()->modelKeys())->get()->groupBy('reserva_id'),
         ])->header('Cache-Control', 'private, no-store');
     }
 
+    /** Novo contrato: aluguel (cliente) ou, vindo de uma OS, carro reserva. */
+    public function novo(Request $request)
+    {
+        $this->authorize('locacao.editar');
+        $os = $request->integer('os') ? OrdemServico::with(['cliente', 'veiculo'])->findOrFail($request->integer('os')) : null;
+        $emUso = MobilidadeReserva::where('status', 'entregue')->whereNotNull('frota_id')->pluck('frota_id');
+
+        return view('locacao.novo', [
+            'os' => $os,
+            'modalidade' => $os || $request->query('modalidade') === 'carro_reserva' ? 'carro_reserva' : 'aluguel',
+            'cliente' => $request->integer('cliente') ? Cliente::find($request->integer('cliente')) : null,
+            'ordens' => OrdemServico::with(['cliente', 'veiculo'])->whereIn('status', array_map(fn ($s) => $s->value, StatusOs::doPatio()))
+                ->latest('id')->limit(100)->get(),
+            'clientes' => Cliente::orderBy('nome')->limit(1000)->get(['id', 'nome', 'cpf_cnpj']),
+            'condutores' => MobilidadeCondutor::orderBy('nome')->get(['id', 'nome', 'categoria', 'validade']),
+            'frota' => MobilidadeFrota::where('situacao', 'disponivel')->whereNotIn('id', $emUso)->orderBy('descricao')->get(),
+        ]);
+    }
+
+    public function mostrar(MobilidadeReserva $reserva)
+    {
+        $this->authorize('locacao.ver');
+        $reserva->load(['cliente', 'ordemServico.veiculo', 'frota', 'condutor', 'titulos', 'multas']);
+
+        return response()->view('locacao.show', [
+            'reserva' => $reserva,
+            'fotos' => MobilidadeFoto::where('reserva_id', $reserva->id)->get(),
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
+    /** Cadastro rápido da frota (o completo fica em Locadora > Frota). */
     public function frota(Request $request, ?MobilidadeFrota $frota = null)
     {
         $this->authorize('locacao.editar');
@@ -87,7 +112,7 @@ class LocacaoController extends Controller
             MobilidadeFrota::create($dados);
         }
 
-        return redirect()->to(route('locacao.index').'#frota')->with('ok', 'Carro da frota salvo.');
+        return redirect()->route('locadora.frota.index')->with('ok', 'Carro da frota salvo.');
     }
 
     public function reservar(Request $request, Reservas $reservas)
@@ -104,24 +129,31 @@ class LocacaoController extends Controller
             'contrato_externo' => ['nullable', 'string', 'max:120'],
             'inicio' => ['required', 'date_format:Y-m-d\TH:i'],
             'fim' => ['required', 'date_format:Y-m-d\TH:i', 'after:inicio'],
+            'plano' => ['sometimes', Rule::in(array_keys(MobilidadeReserva::PLANOS))],
+            'valor' => ['nullable', 'string', 'max:20'],
             'diaria' => ['nullable', 'string', 'max:20'],
             'caucao' => ['nullable', 'string', 'max:20'],
+            'km_livre' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'km_excedente' => ['nullable', 'string', 'max:20'],
         ], [
             'ordem_servico_id.required_if' => 'Escolha a OS do cliente que vai usar o carro reserva.',
             'cliente_id.required_if' => 'Escolha o cliente do aluguel.',
         ]);
         $dados['inicio'] = Carbon::parse($dados['inicio'])->toDateTimeString();
         $dados['fim'] = Carbon::parse($dados['fim'])->toDateTimeString();
-        $dados['diaria_centavos'] = $this->centavos($dados['diaria'] ?? null);
+        $dados['plano'] ??= 'diaria';
+        $dados['valor_periodo_centavos'] = $this->centavos($dados['valor'] ?? $dados['diaria'] ?? null);
         $dados['caucao_centavos'] = $this->centavos($dados['caucao'] ?? null);
-        unset($dados['diaria'], $dados['caucao']);
+        $dados['km_excedente_centavos'] = $this->centavos($dados['km_excedente'] ?? null);
+        $dados['km_livre'] ??= null;
+        unset($dados['valor'], $dados['diaria'], $dados['caucao'], $dados['km_excedente']);
         try {
             $reserva = $reservas->reservar($dados);
         } catch (DomainException $e) {
             return back()->withInput()->with('erro', $e->getMessage());
         }
 
-        return redirect()->to(route('locacao.index').'#reserva-'.$reserva->id)
+        return redirect()->route('locacao.contrato', $reserva)
             ->with('ok', $reserva->ehAluguel() ? 'Aluguel registrado.' : 'Carro reserva registrado.');
     }
 

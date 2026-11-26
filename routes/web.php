@@ -84,6 +84,23 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/sair', [AuthController::class, 'sair'])->name('logout');
     Route::get('/sistema', PainelController::class)->name('painel');
+    Route::post('/sistema/area', \App\Http\Controllers\AreaController::class)->name('area.trocar');
+
+    // Locadora: área separada da oficina (painel, frota, multas; contratos em /locacao).
+    Route::prefix('locadora')->name('locadora.')->controller(\App\Http\Controllers\LocadoraController::class)->group(function () {
+        Route::get('/', 'painel')->name('painel');
+        Route::get('/frota', 'frota')->name('frota.index');
+        Route::get('/frota/novo', 'frotaForm')->name('frota.create');
+        Route::post('/frota', 'salvarFrota')->name('frota.store');
+        Route::get('/frota/{frota}/editar', 'frotaForm')->name('frota.edit');
+        Route::put('/frota/{frota}', 'salvarFrota')->name('frota.update');
+        Route::get('/frota/{frota}/foto', 'foto')->name('frota.foto');
+        Route::post('/frota/{frota}/oficina', 'paraOficina')->name('frota.oficina');
+        Route::get('/multas', 'multas')->name('multas.index');
+        Route::post('/multas', 'salvarMulta')->name('multas.store');
+        Route::put('/multas/{multa}/situacao', 'situacaoMulta')->name('multas.situacao');
+        Route::post('/multas/{multa}/cobrar', 'cobrarMulta')->name('multas.cobrar');
+    });
 
     // Recepção por placa
     Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao');
@@ -117,6 +134,8 @@ Route::middleware('auth')->group(function () {
     // Locação (módulo ligado por empresa): carro reserva ligado à OS e aluguel sem OS.
     Route::prefix('locacao')->name('locacao.')->group(function () {
         Route::get('/', [\App\Http\Controllers\LocacaoController::class, 'index'])->name('index');
+        Route::get('/novo', [\App\Http\Controllers\LocacaoController::class, 'novo'])->name('novo');
+        Route::get('/contratos/{reserva}', [\App\Http\Controllers\LocacaoController::class, 'mostrar'])->name('contrato');
         Route::post('/frota', [\App\Http\Controllers\LocacaoController::class, 'frota'])->name('frota.store');
         Route::put('/frota/{frota}', [\App\Http\Controllers\LocacaoController::class, 'frota'])->name('frota.update');
         Route::post('/reservas', [\App\Http\Controllers\LocacaoController::class, 'reservar'])->name('reserva.store');

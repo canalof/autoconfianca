@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\PertenceAEmpresa;
+use App\Models\Concerns\SeparadoPorArea;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /** Caixa do dia: abre com um troco, recebe e paga, fecha conferindo o dinheiro da gaveta. */
 class Caixa extends Model
 {
-    use PertenceAEmpresa;
+    use PertenceAEmpresa, SeparadoPorArea;
 
     protected $fillable = ['aberto_por', 'fechado_por', 'aberto_em', 'fechado_em', 'saldo_inicial_centavos', 'dinheiro_esperado_centavos', 'dinheiro_contado_centavos', 'observacao'];
 

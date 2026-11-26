@@ -160,6 +160,7 @@ class EntradaCompra
             $n = count($parcelas);
             foreach (array_values($parcelas) as $i => $dup) {
                 ContaPagar::create([
+                    'area' => 'oficina',
                     'fornecedor_id' => $compra->fornecedor_id,
                     'compra_id' => $compra->id,
                     'categoria' => 'Peças e fornecedores',

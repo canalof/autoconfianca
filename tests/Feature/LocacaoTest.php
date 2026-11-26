@@ -62,13 +62,13 @@ class LocacaoTest extends TestCase
 
         $this->actingAs($u)->get('/locacao')->assertForbidden();
         $this->post('/locacao/frota', ['placa' => 'ABC1D23', 'descricao' => 'Gol', 'km' => 1, 'situacao' => 'disponivel'])->assertForbidden();
-        $this->get('/sistema')->assertOk()->assertDontSee('Reservas e frota');
+        $this->get('/sistema')->assertOk()->assertDontSee('/sistema/area');
 
         // Condutores e retirada são da oficina e continuam disponíveis
         $this->get('/mobilidade')->assertOk()->assertSee('Condutores e retirada');
 
         $u->empresa->forceFill(['modulo_locacao' => true])->save();
-        $this->actingAs($u->fresh())->get('/locacao')->assertOk()->assertSee('Novo aluguel')->assertSee('Novo carro reserva')->assertSee('Reservas e frota');
+        $this->actingAs($u->fresh())->get('/locacao')->assertOk()->assertSee('Novo aluguel')->assertSee('Novo carro reserva')->assertSee('/sistema/area');
     }
 
     public function test_ligar_o_modulo_pela_tela_da_empresa(): void
@@ -105,7 +105,7 @@ class LocacaoTest extends TestCase
         $this->assertStringContainsString('aluguel', $titulo->descricao);
         $this->assertSame(10400, $this->em($u, fn () => $carro->fresh()->km));
 
-        $this->get('/locacao?situacao=encerradas&modalidade=aluguel')->assertOk()->assertSee('Bruno Alves')->assertSee('Devolvida');
+        $this->get('/locacao?situacao=encerradas&modalidade=aluguel')->assertOk()->assertSee('Bruno Alves')->assertSee('Encerrado');
     }
 
     public function test_aluguel_nao_aceita_os_nem_locadora_parceira(): void

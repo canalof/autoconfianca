@@ -20,6 +20,8 @@ class HistoricoController extends Controller
         'os' => [\App\Models\OrdemServico::class, 'OrdemServico', 'os.show'],
         'conta-pagar' => [\App\Models\ContaPagar::class, 'ContaPagar', 'pagar.index'],
         'conta-receber' => [\App\Models\ContaReceber::class, 'ContaReceber', 'receber.index'],
+        'carro-frota' => [\App\Models\MobilidadeFrota::class, 'MobilidadeFrota', 'locadora.frota.edit'],
+        'contrato' => [\App\Models\MobilidadeReserva::class, 'MobilidadeReserva', 'locacao.contrato'],
     ];
 
     public const ROTULOS = [
@@ -34,6 +36,10 @@ class HistoricoController extends Controller
         'status' => 'Situação', 'desconto_centavos' => 'Desconto', 'total_centavos' => 'Total', 'diagnostico' => 'Diagnóstico', 'mecanico_id' => 'Mecânico',
         'defeito_relatado' => 'Relato', 'previsao_entrega' => 'Previsão', 'valor_centavos' => 'Valor', 'vencimento' => 'Vencimento', 'descricao' => 'Descrição',
         'categoria' => 'Categoria', 'motivo' => 'Motivo', 'tempo_minutos' => 'Tempo', 'garantia_dias' => 'Garantia', 'revisao_meses' => 'Revisão (meses)', 'revisao_km' => 'Revisão (km)',
+        'km' => 'Km', 'situacao' => 'Situação', 'diaria_centavos' => 'Diária', 'semanal_centavos' => 'Semana', 'mensal_centavos' => 'Mês',
+        'caucao_centavos' => 'Caução', 'km_livre_dia' => 'Km livres por dia', 'km_livre' => 'Km livres por dia', 'km_excedente_centavos' => 'Km excedente',
+        'ipva_vencimento' => 'IPVA', 'licenciamento_vencimento' => 'Licenciamento', 'seguro_vencimento' => 'Seguro', 'proxima_revisao_km' => 'Próxima revisão',
+        'ano' => 'Ano', 'plano' => 'Plano', 'valor_periodo_centavos' => 'Valor do período', 'inicio' => 'Saída', 'fim' => 'Devolução prevista',
     ];
 
     private const OCULTOS = ['id', 'empresa_id', 'loja_id', 'created_at', 'updated_at', 'deleted_at', 'password', 'remember_token', 'token', 'ultimo_acesso_em',

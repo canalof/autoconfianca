@@ -3,6 +3,7 @@
 namespace App\Services\Financeiro;
 
 use App\Models\Caixa;
+use App\Support\Area;
 use App\Models\CaixaMovimento;
 use App\Models\ContaPagar;
 use App\Models\ContaReceber;
@@ -29,6 +30,12 @@ class Financeiro
      */
     public function receberOs(OrdemServico $os, array $linhas): void
     {
+        // OS é sempre da oficina: caixa e títulos da oficina, mesmo se a pessoa estiver na tela da locadora.
+        if (Area::atual() !== null && Area::atual() !== Area::OFICINA) {
+            Area::com(Area::OFICINA, fn () => $this->receberOs($os, $linhas));
+
+            return;
+        }
         // Nunca descartar silenciosamente valores negativos/zerados: isso
         // poderia alterar a composição do pagamento sem o usuário perceber.
         if ($linhas === []) {

@@ -84,7 +84,8 @@ class MobilidadeDocumentoController extends Controller
             self::TIPOS[$tipo], 'Oficina: '.$request->user()->empresa->nome_fantasia,
             ...($os ? ['OS: '.$os->numeroFormatado().' · Veículo da OS: '.$os->veiculo->placaFormatada()] : []),
             ...($clienteReserva ? ['Cliente: '.$clienteReserva->nome] : []),
-            ...($carro ? ['Carro: '.Placa::formatar($carro->placa).' · '.$carro->descricao] : []),
+            ...($carro ? ['Carro: '.Placa::formatar($carro->placa).' · '.$carro->nomeCompleto()
+                .($carro->renavam ? ' · Renavam '.$carro->renavam : '').($carro->chassi ? ' · Chassi '.$carro->chassi : '')] : []),
             'Condutor: '.$condutor->nome,
         ]);
         $detalhes = $retirada
@@ -92,7 +93,8 @@ class MobilidadeDocumentoController extends Controller
             : [
                 'Reserva #'.$reserva->id.' · Período: '.$reserva->inicio->format('d/m/Y H:i').' a '.$reserva->fim->format('d/m/Y H:i'),
                 'Locadora parceira: '.($reserva->parceira ?: '—').' · Contrato externo: '.($reserva->contrato_externo ?: '—'),
-                'Diária: '.\App\Support\Dinheiro::formatar($reserva->diaria_centavos).' · Caução registrada: '.\App\Support\Dinheiro::formatar($reserva->caucao_centavos),
+                'Plano: '.(MobilidadeReserva::PLANOS[$reserva->plano] ?? $reserva->plano).' · Valor por período: '.\App\Support\Dinheiro::formatar($reserva->valorPeriodo()).' · Caução registrada: '.\App\Support\Dinheiro::formatar($reserva->caucao_centavos),
+                'Quilometragem: '.($reserva->km_livre ? number_format($reserva->km_livre, 0, ',', '.').' km livres por dia · km excedente '.\App\Support\Dinheiro::formatar($reserva->km_excedente_centavos) : 'livre'),
                 'Vistoria: '.($dadosEtapa['vistoria'] ?? '—').' · Km: '.($dadosEtapa['km'] ?? '—').' · Combustível (0–4): '.($dadosEtapa['combustivel'] ?? '—'),
             ];
         $documento = MobilidadeDocumento::create([

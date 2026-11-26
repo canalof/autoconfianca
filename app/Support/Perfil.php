@@ -14,6 +14,7 @@ enum Perfil: string
     case Mecanico = 'mecanico';
     case Caixa = 'caixa';
     case Estoquista = 'estoquista';
+    case Locadora = 'locadora';
 
     public function rotulo(): string
     {
@@ -24,6 +25,7 @@ enum Perfil: string
             self::Mecanico => 'Mecânico',
             self::Caixa => 'Caixa',
             self::Estoquista => 'Estoquista',
+            self::Locadora => 'Atendente da locadora',
         };
     }
 
@@ -37,6 +39,8 @@ enum Perfil: string
             self::Mecanico => ['clientes.ver', 'veiculos.ver', 'os.ver', 'os.executar', 'estoque.ver', 'agenda.ver'],
             self::Caixa => ['clientes.ver', 'clientes.editar', 'veiculos.ver', 'os.ver', 'caixa.operar', 'financeiro.ver', 'financeiro.editar', 'notas.emitir', 'agenda.ver', 'agenda.editar'],
             self::Estoquista => ['veiculos.ver', 'os.ver', 'estoque.ver', 'estoque.editar', 'compras.lancar'],
+            // Só a locadora: clientes, contratos, frota, multas, caixa e contas da locadora (Area).
+            self::Locadora => ['clientes.ver', 'clientes.editar', 'caixa.operar', 'financeiro.ver', 'financeiro.editar'],
         };
     }
 
@@ -47,7 +51,7 @@ enum Perfil: string
         if (preg_match('/^(mobilidade|locacao)\.(ver|editar|excecao)$/', $permissao, $m)) {
             return $m[2] === 'excecao'
                 ? in_array($this, [self::Dono, self::Gerente], true)
-                : in_array($this, [self::Dono, self::Gerente, self::Consultor], true);
+                : in_array($this, [self::Dono, self::Gerente, self::Consultor, self::Locadora], true);
         }
         $p = $this->permissoes();
 

@@ -27,11 +27,12 @@
         <h2 class="mb-3">O que cada perfil pode fazer</h2>
         <dl class="grid gap-3 text-[15px] sm:grid-cols-2">
             <div><dt class="font-semibold">Dono</dt><dd class="text-suave">Tudo, inclusive dados da empresa.</dd></div>
-            <div><dt class="font-semibold">Gerente</dt><dd class="text-suave">Tudo, menos os dados da empresa e fiscais.</dd></div>
+            <div><dt class="font-semibold">Gerente</dt><dd class="text-suave">Tudo, menos os dados da empresa e fiscais. Dono e gerente trocam entre oficina e locadora no topo do menu.</dd></div>
             <div><dt class="font-semibold">Consultor / recepção</dt><dd class="text-suave">Recebe carros, agenda, abre OS, envia orçamentos, recebe pagamentos e emite notas.</dd></div>
             <div><dt class="font-semibold">Mecânico</dt><dd class="text-suave">Vê as OS e o estoque, registra diagnóstico e fotos, inicia e conclui serviços.</dd></div>
             <div><dt class="font-semibold">Caixa</dt><dd class="text-suave">Caixa, contas a receber e a pagar, notas fiscais e agenda.</dd></div>
             <div><dt class="font-semibold">Estoquista</dt><dd class="text-suave">Produtos, ajustes de estoque, fornecedores e entrada de notas de compra.</dd></div>
+            <div><dt class="font-semibold">Atendente da locadora</dt><dd class="text-suave">Só a locadora: contratos, frota, multas, clientes, caixa e contas da locadora. Não vê a oficina.</dd></div>
         </dl>
     </section>
 </x-app>

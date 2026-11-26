@@ -12,6 +12,9 @@ class PainelController extends Controller
 {
     public function __invoke()
     {
+        if (\App\Support\Area::locadora()) {
+            return redirect()->route('locadora.painel');
+        }
         $inicioMes = now()->startOfMonth();
 
         return view('painel', [

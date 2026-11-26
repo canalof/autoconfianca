@@ -11,6 +11,8 @@ use App\Models\MobilidadeFrota;
 use App\Models\MobilidadeReserva;
 use App\Models\OrdemServico;
 use App\Services\Cnh\VerificationService;
+use App\Support\Area;
+use Carbon\Carbon;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -44,6 +46,14 @@ class Reservas
                 $frota = MobilidadeFrota::whereKey($dados['frota_id'])->lockForUpdate()->firstOrFail();
                 $this->verificarDisponibilidade($frota, $dados['inicio'], $dados['fim']);
             }
+
+            $dados['plano'] ??= 'diaria';
+            if ($dados['plano'] !== 'diaria' && ($dados['tipo'] ?? 'frota') === 'parceira') {
+                throw new DomainException('Carro de locadora parceira usa só o plano diária.');
+            }
+            // Valor por período: o informado ou, se veio a diária antiga, a diária.
+            $dados['valor_periodo_centavos'] ??= $dados['diaria_centavos'] ?? 0;
+            $dados['diaria_centavos'] = $dados['plano'] === 'diaria' ? $dados['valor_periodo_centavos'] : 0;
 
             return MobilidadeReserva::create($dados + ['status' => 'reservada']);
         }, 3);
@@ -83,6 +93,42 @@ class Reservas
             $this->verificarDisponibilidade($frota, $r->inicio->toDateTimeString(), $dados['fim'], $r->id);
         }
         $r->update(['fim' => $dados['fim']]);
+        if ($r->status === 'entregue' && $r->parcelado()) {
+            $this->gerarParcelas($r);
+        }
+    }
+
+    /** Área do financeiro: aluguel é da locadora; carro reserva é cobrado com a OS, na oficina. */
+    private function area(MobilidadeReserva $r): string
+    {
+        return $r->ehAluguel() ? Area::LOCADORA : Area::OFICINA;
+    }
+
+    /**
+     * Plano semanal ou mensal: uma parcela por período, cobrada no início do período,
+     * até cobrir a devolução prevista. Na prorrogação, gera só o que falta.
+     */
+    private function gerarParcelas(MobilidadeReserva $r): void
+    {
+        if ($r->tipo === 'parceira' || $r->valorPeriodo() <= 0) {
+            return;
+        }
+        $cursor = Carbon::parse($r->parcelas_ate ?? $r->inicio);
+        $numero = ContaReceber::withoutGlobalScope('area')->where('reserva_id', $r->id)->where('categoria', 'locacao')->count();
+        $rotulo = $r->plano === 'semanal' ? 'semana' : 'mês';
+        while ($cursor->lt($r->fim)) {
+            $proximo = $r->plano === 'semanal' ? $cursor->copy()->addWeek() : $cursor->copy()->addMonthNoOverflow();
+            $numero++;
+            ContaReceber::create([
+                'cliente_id' => $r->cliente_id, 'ordem_servico_id' => $r->ordem_servico_id, 'reserva_id' => $r->id,
+                'categoria' => 'locacao', 'area' => $this->area($r), 'forma' => 'prazo',
+                'descricao' => 'Locação #'.$r->id.' · '.$numero.'º '.$rotulo.' ('.$cursor->format('d/m').' a '.$proximo->copy()->subDay()->format('d/m').')',
+                'parcela' => (string) $numero,
+                'valor_centavos' => $r->valorPeriodo(), 'vencimento' => $cursor->toDateString(),
+            ]);
+            $cursor = $proximo;
+        }
+        $r->update(['parcelas_ate' => $cursor]);
     }
 
     private function entregar(MobilidadeReserva $r, ?MobilidadeFrota $frota, array $dados): void
@@ -97,6 +143,9 @@ class Reservas
         app(VerificationService::class)->verificar(Empresa::findOrFail($r->empresa_id), $condutor, $conferencia);
         $r->update(['status' => 'entregue', 'entrega' => $dados + ['quando' => now()->toIso8601String(), 'user_id' => auth()->id()]]);
         $frota?->update(['km' => $dados['km']]);
+        if ($r->parcelado()) {
+            $this->gerarParcelas($r);
+        }
     }
 
     private function devolver(MobilidadeReserva $r, ?MobilidadeFrota $frota, array $dados): void
@@ -104,8 +153,16 @@ class Reservas
         if ($r->status !== 'entregue' || $dados['km'] < $r->entrega['km']) {
             throw new DomainException('A devolução exige entrega registrada e quilometragem final igual ou superior à inicial.');
         }
-        $dias = max(1, (int) ceil($r->inicio->diffInSeconds($r->fim) / 86400));
-        $valor = $dias * $r->diaria_centavos + $dados['taxas_centavos'];
+        // Diária: dias do período previsto (ou até a devolução, se passou do previsto).
+        $fimCobrado = now()->gt($r->fim) ? now() : $r->fim;
+        $dias = max(1, (int) ceil($r->inicio->diffInSeconds($fimCobrado) / 86400));
+        $excedente = 0;
+        if ($r->km_livre && $r->km_excedente_centavos) {
+            $rodado = $dados['km'] - (int) $r->entrega['km'];
+            $excedente = max(0, $rodado - $r->km_livre * $dias) * $r->km_excedente_centavos;
+        }
+        $periodos = $r->parcelado() ? 0 : $dias * $r->valorPeriodo();
+        $valor = $periodos + $excedente + $dados['taxas_centavos'];
         if ($valor > 999999999) {
             throw new DomainException('Valor da locação excede o limite aceito.');
         }
@@ -113,16 +170,17 @@ class Reservas
         if ($valor > 0 && $r->tipo !== 'parceira') {
             $os = $r->ordem_servico_id ? OrdemServico::findOrFail($r->ordem_servico_id) : null;
             $titulo = ContaReceber::create([
-                'cliente_id' => $r->cliente_id ?? $os?->cliente_id, 'ordem_servico_id' => $os?->id,
-                'categoria' => 'locacao',
-                'descricao' => 'Locação · '.($r->ehAluguel() ? 'aluguel' : 'carro reserva').' #'.$r->id.($os ? ' · OS '.$os->numeroFormatado() : ''),
+                'cliente_id' => $r->cliente_id ?? $os?->cliente_id, 'ordem_servico_id' => $os?->id, 'reserva_id' => $r->id,
+                'categoria' => 'locacao', 'area' => $this->area($r),
+                'descricao' => 'Locação · '.($r->ehAluguel() ? 'aluguel' : 'carro reserva').' #'.$r->id.($os ? ' · OS '.$os->numeroFormatado() : '')
+                    .($r->parcelado() ? ' · fechamento' : '').($excedente ? ' · inclui km excedente' : ''),
                 'valor_centavos' => $valor, 'vencimento' => today(), 'forma' => 'prazo',
             ]);
         }
         $r->update([
             'status' => 'devolvida', 'conta_receber_id' => $titulo?->id,
             'devolucao' => $dados + ['quando' => now()->toIso8601String(), 'user_id' => auth()->id()],
-            'taxas_centavos' => $dados['taxas_centavos'], 'ocorrencias' => $dados['ocorrencias'] ?? null,
+            'taxas_centavos' => $dados['taxas_centavos'] + $excedente, 'ocorrencias' => $dados['ocorrencias'] ?? null,
         ]);
         $frota?->update(['km' => $dados['km']]);
     }

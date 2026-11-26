@@ -13,7 +13,35 @@
 <body class="min-h-screen">
 @php
     // [rota, rótulo, ícone, permissão, módulo opcional, outras rotas que acendem o item]. Grupos ficam recolhidos fora do item ativo.
-    $menu = [
+    $areaAtual = \App\Support\Area::atual() ?? 'oficina';
+    $areasUsuario = \App\Support\Area::disponiveis(auth()->user());
+    $iconeCarro = 'M5 16h14l-1.5-5.5A2 2 0 0 0 15.6 9H8.4a2 2 0 0 0-1.9 1.5zM7 16v2M17 16v2M7.5 13h.01M16.5 13h.01';
+    $dinheiro = [
+        ['caixa.index', 'Caixa', 'M3 7h18v12H3zM3 11h18M7 15h3', 'caixa.operar', null],
+        ['receber.index', 'Contas a receber', 'M12 3v18M17 8l-5-5-5 5', 'financeiro.ver', null],
+        ['pagar.index', 'Contas a pagar', 'M12 21V3M7 16l5 5 5-5', 'financeiro.ver', null],
+        ['relatorio.index', 'Resumo do mês', 'M4 20V10M10 20V4M16 20v-7M22 20H2', 'financeiro.ver', null],
+        ['bancos.index', 'Bancos', 'M3 9l9-5 9 5M4 20h16M6 10v7M12 10v7M18 10v7', 'financeiro.ver', 'bancos'],
+        ['pix.index', 'Pix', 'M12 3l9 9-9 9-9-9zM8 12h8', 'financeiro.ver', 'bancos'],
+    ];
+    $ajustes = [
+        ['empresa.edit', 'Empresa e módulos', 'M4 21V5l8-2 8 2v16M9 21v-4h6v4M8 9h.01M12 9h.01M16 9h.01M8 13h.01M12 13h.01M16 13h.01', 'empresa.configurar', null],
+        ['usuarios.index', 'Usuários', 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c0-3 3-5 6-5s6 2 6 5M17 11a3 3 0 0 0 0-6M21 20c0-2-1.5-4-4-4.7', 'usuarios.gerenciar', null],
+        ['cnh.integracoes.index', 'Integrações de CNH', 'M8 12h8M10 8l2-2a4 4 0 0 1 6 6l-2 2M14 16l-2 2a4 4 0 0 1-6-6l2-2', 'empresa.configurar', 'condutores'],
+    ];
+    $menu = $areaAtual === 'locadora' ? [
+        null => [
+            ['locadora.painel', 'Início', 'M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-18v6h8V3z', 'locacao.ver', null],
+            ['locacao.index', 'Contratos', 'M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 12h6M9 16h4', 'locacao.ver', null],
+            ['locadora.frota.index', 'Frota', $iconeCarro, 'locacao.ver', null],
+            ['locadora.multas.index', 'Multas', 'M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z', 'locacao.ver', null],
+            ['clientes.index', 'Clientes', 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 21c0-4 4-6 8-6s8 2 8 6', 'clientes.ver', null],
+            ['mobilidade.index', 'Condutores e CNH', 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM9 21l3-3 3 3M12 18v-3', 'mobilidade.ver', 'condutores', 'cnh.index'],
+            ['mobilidade.documentos', 'Modelos de contrato', 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5', 'locacao.editar', null],
+        ],
+        'Dinheiro da locadora' => $dinheiro,
+        'Ajustes' => $ajustes,
+    ] : [
         null => [
             ['painel', 'Início', 'M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-18v6h8V3z', null, null],
             ['recepcao', 'Recepção', 'M4 7h16M4 12h16M4 17h10', 'veiculos.ver', null],
@@ -30,24 +58,14 @@
             ['servicos.index', 'Catálogo de serviços', 'M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z', 'os.ver', null],
         ],
         'Dinheiro' => [
-            ['caixa.index', 'Caixa', 'M3 7h18v12H3zM3 11h18M7 15h3', 'caixa.operar', null],
-            ['receber.index', 'Contas a receber', 'M12 3v18M17 8l-5-5-5 5', 'financeiro.ver', null],
-            ['pagar.index', 'Contas a pagar', 'M12 21V3M7 16l5 5 5-5', 'financeiro.ver', null],
-            ['relatorio.index', 'Resumo do mês', 'M4 20V10M10 20V4M16 20v-7M22 20H2', 'financeiro.ver', null],
-            ['bancos.index', 'Bancos', 'M3 9l9-5 9 5M4 20h16M6 10v7M12 10v7M18 10v7', 'financeiro.ver', 'bancos'],
-            ['pix.index', 'Pix', 'M12 3l9 9-9 9-9-9zM8 12h8', 'financeiro.ver', 'bancos'],
+            ...$dinheiro,
             ['comissoes.index', 'Comissões', 'M19 5L5 19M6.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', 'comissoes.ver', 'comissoes'],
             ['notas.index', 'Notas fiscais', 'M6 2h9l5 5v15H6zM14 2v6h6M9 13h6M9 17h6M9 9h2', 'notas.emitir', 'fiscal'],
         ],
-        'Condutores e locação' => [
+        'Retirada' => [
             ['mobilidade.index', 'Condutores e retirada', 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM9 21l3-3 3 3M12 18v-3', 'mobilidade.ver', 'condutores'],
-            ['locacao.index', 'Reservas e frota', 'M5 16h14l-1.5-5.5A2 2 0 0 0 15.6 9H8.4a2 2 0 0 0-1.9 1.5zM7 16v2M17 16v2M3 5h4M5 3v4', 'locacao.ver', 'locacao'],
         ],
-        'Ajustes' => [
-            ['empresa.edit', 'Empresa e módulos', 'M4 21V5l8-2 8 2v16M9 21v-4h6v4M8 9h.01M12 9h.01M16 9h.01M8 13h.01M12 13h.01M16 13h.01', 'empresa.configurar', null],
-            ['usuarios.index', 'Usuários', 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c0-3 3-5 6-5s6 2 6 5M17 11a3 3 0 0 0 0-6M21 20c0-2-1.5-4-4-4.7', 'usuarios.gerenciar', null],
-            ['cnh.integracoes.index', 'Integrações de CNH', 'M8 12h8M10 8l2-2a4 4 0 0 1 6 6l-2 2M14 16l-2 2a4 4 0 0 1-6-6l2-2', 'empresa.configurar', 'condutores'],
-        ],
+        'Ajustes' => $ajustes,
     ];
 @endphp
 <div class="lg:flex">
@@ -56,9 +74,17 @@
             <img src="/favicon.svg" width="30" height="30" class="rounded-md" alt="">
             <div>
                 <div class="text-lg font-bold leading-none tracking-tight text-white">{{ config('oficina.nome') }}</div>
-                <div class="mt-1 max-w-[160px] truncate text-xs text-[#8d9aa6]">{{ auth()->user()->empresa->nome_fantasia }}</div>
+                <div class="mt-1 max-w-[160px] truncate text-xs text-[#8d9aa6]">{{ $areaAtual === 'locadora' ? 'Locadora' : auth()->user()->empresa->nome_fantasia }}</div>
             </div>
         </div>
+        @if (count($areasUsuario) > 1)
+            <form method="post" action="{{ route('area.trocar') }}" class="mx-3 mt-3 grid grid-cols-2 gap-1 rounded-lg bg-asfalto-2 p-1" aria-label="Área do sistema">
+                @csrf
+                @foreach ($areasUsuario as $a)
+                    <button name="area" value="{{ $a }}" @class(['rounded-md px-2 py-1.5 text-sm font-semibold', 'bg-sinal text-asfalto' => $a === $areaAtual, 'text-[#c5ced6] hover:text-white' => $a !== $areaAtual]) @if($a === $areaAtual) aria-pressed="true" @endif>{{ \App\Support\Area::ROTULOS[$a] }}</button>
+                @endforeach
+            </form>
+        @endif
         <nav class="min-h-0 flex-1 overflow-y-auto p-3">
             @foreach ($menu as $grupo => $itens)
                 @php
@@ -102,8 +128,12 @@
             <button class="rounded-md p-2 hover:bg-fundo" data-menu-abrir aria-label="Abrir menu">
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
             </button>
-            <span class="font-bold">{{ config('oficina.nome') }}</span>
-            @can('veiculos.ver')<a href="{{ route('recepcao') }}" class="btn-sinal btn-sm ml-auto">Recepção</a>@endcan
+            <span class="font-bold">{{ config('oficina.nome') }}@if ($areaAtual === 'locadora') <span class="font-normal text-suave">· Locadora</span>@endif</span>
+            @if ($areaAtual === 'locadora')
+                @can('locacao.editar')<a href="{{ route('locacao.novo') }}" class="btn-sinal btn-sm ml-auto">Novo contrato</a>@endcan
+            @else
+                @can('veiculos.ver')<a href="{{ route('recepcao') }}" class="btn-sinal btn-sm ml-auto">Recepção</a>@endcan
+            @endif
         </header>
         <main class="mx-auto max-w-6xl px-4 py-6 lg:px-8 lg:py-8">
             @include('partials.flash')

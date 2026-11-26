@@ -4,16 +4,17 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditavel;
 use App\Models\Concerns\PertenceAEmpresa;
+use App\Models\Concerns\SeparadoPorArea;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ContaReceber extends Model
 {
-    use Auditavel, PertenceAEmpresa;
+    use Auditavel, PertenceAEmpresa, SeparadoPorArea;
 
     protected $table = 'contas_receber';
 
-    protected $fillable = ['cliente_id', 'ordem_servico_id', 'categoria', 'descricao', 'parcela', 'valor_centavos', 'vencimento', 'forma', 'status', 'recebido_em', 'forma_recebida'];
+    protected $fillable = ['cliente_id', 'ordem_servico_id', 'categoria', 'descricao', 'parcela', 'valor_centavos', 'vencimento', 'forma', 'status', 'recebido_em', 'forma_recebida', 'area', 'reserva_id'];
 
     protected function casts(): array
     {
