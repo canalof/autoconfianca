@@ -313,4 +313,16 @@ class WhatsappEvolutionTest extends TestCase
         $outra = $this->novaEmpresa('Outra');
         $this->actingAs($outra)->getJson('/whatsapp/conectar/qr')->assertNotFound(); // sem WhatsApp configurado
     }
+
+    public function test_mensagem_de_teste(): void
+    {
+        $dono = $this->oficina();
+        Empresa::whereKey($dono->empresa_id)->update(['whatsapp_estado' => 'open']);
+        $this->actingAs($dono->fresh())->get('/whatsapp')->assertSee('Enviar mensagem de teste');
+        $this->post('/whatsapp/teste', ['numero' => '(19) 97407-3250'])->assertSessionHas('ok');
+        $this->assertSame('5519974073250', $this->enviados[0]['number']);
+        $this->assertStringContainsString('está funcionando', $this->enviados[0]['text']);
+        $consultor = $this->usuarioNaMesmaEmpresa($dono, \App\Support\Perfil::Consultor);
+        $this->actingAs($consultor)->post('/whatsapp/teste', ['numero' => '(19) 97407-3250'])->assertForbidden();
+    }
 }

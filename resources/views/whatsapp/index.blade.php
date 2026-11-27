@@ -13,6 +13,14 @@
     <div class="mb-5 rounded-md border px-4 py-3 {{ $rotulo[2] }}">
         <div class="font-semibold">{{ $rotulo[0] }}@if($ligado && $estadoEm)<span class="ml-2 text-sm font-normal text-suave">conferido {{ $estadoEm->diffForHumans() }}</span>@endif</div>
         <div class="text-sm text-suave">{{ $rotulo[1] }}</div>
+        @if ($ligado && $estado === 'open')
+            @can('empresa.configurar')
+                <form method="post" action="{{ route('whatsapp.teste') }}" class="mt-3 flex flex-wrap gap-2">@csrf
+                    <input name="numero" class="input w-auto" placeholder="Celular para o teste" inputmode="tel" maxlength="20" required>
+                    <button class="btn">Enviar mensagem de teste</button>
+                </form>
+            @endcan
+        @endif
         @if ($ligado && $estado !== 'open')
             @can('empresa.configurar')
                 <a href="{{ route('whatsapp.conectar') }}" class="btn-primario mt-3 inline-flex">Conectar WhatsApp (QR Code)</a>

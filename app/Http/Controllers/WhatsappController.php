@@ -51,4 +51,18 @@ class WhatsappController extends Controller
 
         return response()->json($r)->header('Cache-Control', 'no-store');
     }
+
+    /** Mensagem de teste para conferir se o WhatsApp automático está saindo. */
+    public function teste(Request $request, WhatsApp $whatsapp)
+    {
+        $this->authorize('empresa.configurar');
+        $empresa = auth()->user()->empresa;
+        abort_unless($whatsapp->disponivel($empresa), 404);
+        $dados = $request->validate(['numero' => ['required', 'string', 'max:20']]);
+        abort_unless(WhatsApp::numero($dados['numero']), 422, 'Celular inválido.');
+        $ok = $whatsapp->enviar($empresa, $dados['numero'],
+            'Teste do sistema '.$empresa->nome_fantasia.': o WhatsApp automático está funcionando.', 'teste');
+
+        return back()->with($ok ? 'ok' : 'erro', $ok ? 'Mensagem de teste enviada.' : 'Não foi possível enviar. Veja o motivo na lista abaixo.');
+    }
 }

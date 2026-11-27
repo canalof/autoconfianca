@@ -77,6 +77,7 @@ Route::middleware('throttle:orcamento')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/whatsapp', [\App\Http\Controllers\WhatsappController::class, 'index'])->name('whatsapp.index');
     Route::get('/whatsapp/conectar', [\App\Http\Controllers\WhatsappController::class, 'conectar'])->name('whatsapp.conectar');
+    Route::post('/whatsapp/teste', [\App\Http\Controllers\WhatsappController::class, 'teste'])->middleware('throttle:10,1')->name('whatsapp.teste');
     Route::get('/whatsapp/conectar/qr', [\App\Http\Controllers\WhatsappController::class, 'qr'])->middleware('throttle:60,1')->name('whatsapp.qr');
     Route::get('/financeiro/pix', [\App\Http\Controllers\PixController::class, 'index'])->middleware('modulo:bancos')->name('pix.index');
     Route::post('/financeiro/pix', [\App\Http\Controllers\PixController::class, 'store'])->middleware('throttle:10,1')->middleware('modulo:bancos')->name('pix.store');
