@@ -129,6 +129,44 @@ class WhatsApp
         }
     }
 
+    /**
+     * Pede à Evolution o QR Code para conectar o celular da oficina (ou o código de 8 dígitos,
+     * se vier o número). Devolve ['estado' => 'open'] se já estiver conectado.
+     *
+     * @return array{estado?: string, qr?: string, codigo?: string, erro?: string}
+     */
+    public function conectar(Empresa $empresa, ?string $numero = null): array
+    {
+        if (! $this->disponivel($empresa)) {
+            return ['erro' => 'WhatsApp automático não configurado.'];
+        }
+        $base = rtrim(config('whatsapp.url'), '/');
+        $inst = rawurlencode($empresa->whatsapp_instancia);
+        try {
+            if ($this->estado($empresa) === 'open') {
+                return ['estado' => 'open'];
+            }
+            $r = Http::timeout(20)->withHeaders(['apikey' => config('whatsapp.chave')])
+                ->get("{$base}/instance/connect/{$inst}", array_filter(['number' => self::numero($numero)]));
+            if (! $r->successful()) {
+                return ['erro' => 'A Evolution respondeu '.$r->status().'. Confira o nome da instância.'];
+            }
+            $qr = (string) ($r->json('base64') ?? $r->json('qrcode.base64') ?? '');
+            $codigo = (string) ($r->json('pairingCode') ?? $r->json('qrcode.pairingCode') ?? '');
+            if ($r->json('instance.state') === 'open') {
+                return ['estado' => 'open'];
+            }
+
+            return array_filter([
+                'estado' => 'connecting',
+                'qr' => str_starts_with($qr, 'data:image/') ? $qr : null,
+                'codigo' => $codigo !== '' ? $codigo : null,
+            ]) + (($qr === '' && $codigo === '') ? ['erro' => 'A Evolution não devolveu o QR. Tente de novo em alguns segundos.'] : []);
+        } catch (\Throwable) {
+            return ['erro' => 'Sem conexão com a Evolution API.'];
+        }
+    }
+
     public static function normalizarEstado(mixed $estado): ?string
     {
         $e = mb_strtolower(trim((string) $estado));

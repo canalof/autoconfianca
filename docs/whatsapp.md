@@ -14,6 +14,7 @@ O sistema funciona sem WhatsApp automático (os botões abrem o WhatsApp com a m
    ```
    Depois: `php artisan config:cache`.
 3. No sistema, em **Empresa e módulos**, preencha "Nome da instância na Evolution API".
+   Para ler o QR Code: **Agenda › WhatsApp › Conectar WhatsApp (QR Code)** (perfil com `empresa.configurar`). A imagem se renova sozinha; se o QR não funcionar, a mesma tela gera o código de 8 dígitos ("Conectar com número de telefone" no celular).
 4. Na Evolution, configure o webhook da instância (v2):
    ```bash
    curl -X POST https://EVO/webhook/set/INSTANCIA -H "apikey: CHAVE_GLOBAL" -H "Content-Type: application/json" \

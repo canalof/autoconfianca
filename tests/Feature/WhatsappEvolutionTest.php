@@ -36,6 +36,11 @@ class WhatsappEvolutionTest extends TestCase
             if (str_contains($r->url(), '/instance/connectionState/')) {
                 return Http::response(['instance' => ['instanceName' => 'oficina', 'state' => $this->estadoEvolution]]);
             }
+            if (str_contains($r->url(), '/instance/connect/')) {
+                return Http::response(str_contains($r->url(), 'number=')
+                    ? ['pairingCode' => 'ABCD1234', 'code' => 'x']
+                    : ['base64' => 'data:image/png;base64,QRQR', 'code' => 'x']);
+            }
             $this->enviados[] = $r->data();
 
             return Http::response(['key' => ['id' => 'MSG'.count($this->enviados), 'fromMe' => true]], 201);
@@ -285,5 +290,27 @@ class WhatsappEvolutionTest extends TestCase
 
         $outra = $this->novaEmpresa('Outra');
         $this->assertSame(0, $this->em($outra, fn () => Lembrete::count() + Servico::count()));
+    }
+
+    public function test_conectar_mostra_o_qr_e_avisa_quando_conecta(): void
+    {
+        $dono = $this->oficina();
+        $this->estadoEvolution = 'close';
+
+        $this->actingAs($dono)->get('/whatsapp')->assertSee('Conectar WhatsApp (QR Code)');
+        $this->get('/whatsapp/conectar')->assertOk()->assertSee('Aparelhos conectados');
+        $this->getJson('/whatsapp/conectar/qr')->assertOk()->assertJson(['estado' => 'connecting', 'qr' => 'data:image/png;base64,QRQR']);
+        $this->getJson('/whatsapp/conectar/qr?numero=(19) 99484-7163')->assertOk()->assertJson(['codigo' => 'ABCD1234']);
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'number=5519994847163'));
+        $this->getJson('/whatsapp/conectar/qr?so_estado=1')->assertOk()->assertJson(['estado' => 'close']);
+
+        $this->estadoEvolution = 'open';
+        $this->getJson('/whatsapp/conectar/qr')->assertOk()->assertJson(['estado' => 'open']);
+        $this->assertSame('open', Empresa::find($dono->empresa_id)->whatsapp_estado);
+
+        $atendente = $this->usuarioNaMesmaEmpresa($dono, \App\Support\Perfil::Consultor);
+        $this->actingAs($atendente)->getJson('/whatsapp/conectar/qr')->assertForbidden();
+        $outra = $this->novaEmpresa('Outra');
+        $this->actingAs($outra)->getJson('/whatsapp/conectar/qr')->assertNotFound(); // sem WhatsApp configurado
     }
 }

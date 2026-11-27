@@ -5,7 +5,7 @@
 - **Webhook da Evolution** (`/sistema/webhook/evolution`, token em `EVOLUTION_WEBHOOK_TOKEN`): conexão do celular, entregue/lida e respostas dos clientes.
 - O sistema entende as respostas mais comuns: PARAR (não recebe mais), confirmar ou remarcar o horário de amanhã, aceitar ou recusar um horário proposto, e "quero agendar" em resposta a um lembrete de revisão (vira pedido na agenda, origem WhatsApp).
 - **WhatsApp desconectado** aparece no painel (`torque:whatsapp-estado` a cada 10 min + evento da Evolution); ao reconectar, reenvia o que falhou.
-- Tela **Agenda › WhatsApp**: respostas dos clientes e situação das mensagens enviadas.
+- Tela **Agenda › WhatsApp**: respostas dos clientes, situação das mensagens enviadas e **Conectar WhatsApp**: QR Code (renova sozinho) ou código de 8 dígitos, direto no sistema.
 - **Lembretes de revisão**: atrasados saem aos poucos (20 por dia), segundo aviso 14 dias depois se o carro não voltou, vários do mesmo carro numa mensagem, "digitando…" e pausa entre envios. Rodapé "responda PARAR".
 - `autoconfianca:servicos-padrao` (troca de óleo, revisão, filtros, fluido de freio, correia dentada, arrefecimento, alinhamento, com prazos) e `autoconfianca:lembretes-historico` (lembretes a partir das OS antigas do Oficina Inteligente, com `--simular`).
 - 10 testes novos (163 no total).

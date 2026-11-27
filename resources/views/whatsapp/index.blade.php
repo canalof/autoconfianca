@@ -6,13 +6,18 @@
         $rotulo = match (true) {
             ! $ligado => ['WhatsApp automático desligado', 'Os botões abrem o WhatsApp com a mensagem pronta. Para ligar, veja docs/whatsapp.md.', 'border-linha bg-fundo'],
             $estado === 'open' => ['Conectado', 'As mensagens automáticas estão saindo pelo número da oficina.', 'border-[#bfe3c8] bg-[#eefaf1]'],
-            $estado === null => ['Conexão ainda não conferida', 'O sistema confere a cada 10 minutos.', 'border-linha bg-fundo'],
-            default => ['Desconectado', 'Leia o QR Code de novo com o celular da oficina (Evolution > instância > conectar). O que falhar é reenviado quando voltar.', 'border-[#f0d58a] bg-[#fff7df]'],
+            $estado === null => ['Conexão ainda não conferida', 'O sistema confere a cada 10 minutos. Se o celular ainda não foi conectado, use o botão abaixo.', 'border-linha bg-fundo'],
+            default => ['Desconectado', 'Leia o QR Code de novo com o celular da oficina. O que falhar é reenviado quando voltar.', 'border-[#f0d58a] bg-[#fff7df]'],
         };
     @endphp
     <div class="mb-5 rounded-md border px-4 py-3 {{ $rotulo[2] }}">
         <div class="font-semibold">{{ $rotulo[0] }}@if($ligado && $estadoEm)<span class="ml-2 text-sm font-normal text-suave">conferido {{ $estadoEm->diffForHumans() }}</span>@endif</div>
         <div class="text-sm text-suave">{{ $rotulo[1] }}</div>
+        @if ($ligado && $estado !== 'open')
+            @can('empresa.configurar')
+                <a href="{{ route('whatsapp.conectar') }}" class="btn-primario mt-3 inline-flex">Conectar WhatsApp (QR Code)</a>
+            @endcan
+        @endif
     </div>
 
     <div class="card mb-6 overflow-x-auto">
