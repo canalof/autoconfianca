@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Cliente;
+use App\Models\ContaPagar;
 use App\Models\ContaReceber;
 use App\Models\Fornecedor;
 use App\Models\HistoricoOsAnterior;
@@ -157,6 +158,50 @@ class ImportacaoOficinaInteligenteTest extends TestCase
             ->assertSee('Serviços no sistema anterior (1)')->assertSee('FILTRO DE OLEO')->assertDontSee('PASTILHA DIANTEIRA');
         $this->actingAs($dono)->get('/veiculos/'.Tenant::com($dono->empresa_id, fn () => Veiculo::first()->id))
             ->assertOk()->assertSee('Serviços no sistema anterior (2)');
+    }
+
+    public function test_importa_contas_a_pagar_pagas_e_abertas_sem_duplicar(): void
+    {
+        $dono = $this->novaEmpresa('AutoConfiança');
+        $outra = $this->novaEmpresa('Outra');
+        $this->montarExportacao();
+        $this->xlsx("{$this->dir}/Contas_a_Pagar_Todas_2025-03_a_2028.xlsx", [
+            ['Empresa', 'Código do Título', 'Parcela', 'Plano de Conta', 'Fornecedor', 'Descrição', 'Nº Documento', 'Tipo', 'Vencimento/Previsão', 'Valor (R$)', 'Status', 'Data Pagamento', 'Valor Pago (R$)'],
+            ['Oficina', '300', '1/2', 'Auto Peça', 'AUTOPEÇAS EXEMPLO', 'PNEU', '555/1', 'LCTO', '17/08/2026', 388.65, 'PAG', '18/08/2026', 388.65],
+            ['Oficina', '300', '2/2', 'Auto Peça', 'AUTOPEÇAS EXEMPLO', 'PNEU', '555/2', 'LCTO', '17/09/2026', 388.65, 'AND', null, null],
+            ['Oficina', '301', '1/1', 'Energia Elétrica', 'COMPANHIA DE LUZ', 'Energia Elétrica', null, 'LCTO', '10/12/2026', 250, 'ATR', null, null],
+            ['Oficina', '302', '1/15', 'Fatura de contas', 'CARTÃO EXEMPLO', 'FATURA', null, 'LCTO', '05/10/2026', 0, 'PAG', '05/10/2026', 944.6],
+            ['Oficina', '302', '2/15', 'Fatura de contas', 'CARTÃO EXEMPLO', 'FATURA', null, 'LCTO', '05/11/2026', 0, 'AND', null, null],
+        ]);
+
+        $this->artisan('autoconfianca:importar', ['pasta' => $this->dir])->assertSuccessful();
+        $this->artisan('autoconfianca:importar', ['pasta' => $this->dir])->assertSuccessful(); // de novo: não duplica
+
+        Tenant::usar($dono->empresa_id);
+        $this->assertSame(4, ContaPagar::count(), 'Fatura em aberto sem valor não entra.');
+        $this->assertSame(94460, ContaPagar::where('descricao', 'like', '%[OI-P 302 1/15]%')->value('valor_centavos'), 'Fatura paga usa o valor pago.');
+        $fornecedor = Fornecedor::where('codigo_anterior', '500')->first();
+        $paga = ContaPagar::where('descricao', 'like', '%[OI-P 300 1/2]%')->first();
+        $this->assertSame(['paga', 38865, $fornecedor->id, 'Peças e fornecedores', '2026-08-18', 'oficina'],
+            [$paga->status, $paga->valor_centavos, $paga->fornecedor_id, $paga->categoria, $paga->pago_em->toDateString(), $paga->area]);
+        $this->assertSame('aberta', ContaPagar::where('descricao', 'like', '%[OI-P 300 2/2]%')->value('status'));
+        $luz = ContaPagar::where('descricao', 'like', '%[OI-P 301 1/1]%')->first();
+        $this->assertSame(['aberta', null, 'Energia e água'], [$luz->status, $luz->fornecedor_id, $luz->categoria]);
+        $this->assertStringContainsString('COMPANHIA DE LUZ', $luz->descricao, 'Sem fornecedor no cadastro, o nome vai na descrição.');
+
+        Tenant::usar($outra->empresa_id);
+        $this->assertSame(0, ContaPagar::count());
+    }
+
+    public function test_plano_de_contas_vira_categoria(): void
+    {
+        $c = fn ($p) => \App\Services\Importacao\OficinaInteligente::categoriaPagar($p);
+        $this->assertSame('Salários', $c('13º Salário'));
+        $this->assertSame('Impostos', $c('DAS/Simples Nacional'));
+        $this->assertSame('Aluguel', $c('Aluguel'));
+        $this->assertSame('Frota: IPVA, licenciamento e seguro', $c('IPVA'));
+        $this->assertSame('Peças e fornecedores', $c('Compra de peça para cliente final'));
+        $this->assertSame('Outros', $c('Brinde'));
     }
 
     public function test_avisa_quando_os_arquivos_estao_em_xls(): void

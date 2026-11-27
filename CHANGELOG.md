@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.1 — contas a pagar do Oficina Inteligente
+
+- `autoconfianca:importar` agora importa **contas a pagar** (`Contas_a_Pagar_*.xlsx`), pagas e em aberto, sem duplicar ao rodar de novo (código + parcela). O plano de contas antigo vira categoria; fatura de cartão em aberto sem valor fica num relatório.
+- Novos relatórios de conferência: `conta_pagar_sem_fornecedor` e `conta_pagar_sem_valor`.
+- 2 testes novos.
+
 ## 1.7.0 — balanço de estoque e troca de servidor
 
 - **Balanço de estoque** (Estoque › Balanço de estoque, ou botão "Balanço" em Produtos): conta vários produtos de uma vez e ajusta só o que estiver diferente. Em branco não mexe.

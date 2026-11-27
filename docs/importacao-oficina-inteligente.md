@@ -12,6 +12,7 @@ O Oficina Inteligente não tem backup: os dados saem pelos relatórios. Use a ex
 | `Clientes_*.xlsx` | Clientes (com o código antigo, para casar com as OS) |
 | `Fornecedores_*.xlsx` | Fornecedores |
 | `Contas_a_Receber_Em_Aberto_*.xlsx` | Contas a receber em aberto |
+| `Contas_a_Pagar_*.xlsx` | Contas a pagar, pagas e em aberto (só um arquivo na pasta) |
 | `OS_com_Itens_*.xlsx` (pasta separada) | Veículos (pela placa) e histórico das OS antigas |
 
 Os relatórios de OS vieram em `.xls`. Converta antes (no servidor, com o LibreOffice instalado):
@@ -33,6 +34,17 @@ Se estiver tudo certo, rode de verdade (sem `--simular`). Pode rodar de novo dep
 
 Na exportação de 26/11/2026: 4.366 produtos, 872 clientes, 156 fornecedores, 665 veículos, 1.528 OS antigas e 14 títulos.
 
+Na exportação de 27/11/2026 (segunda rodada, só OS e contas a pagar): OS de abr/2025 a nov/2026 (2.187 no histórico, 870 veículos) e 1.910 contas a pagar (251 em aberto, R$ 309.638,17).
+
+### Contas a pagar
+
+Vêm do relatório **Financeiro > Relatórios > Contas a Pagar e Pagas por Data** (em Excel, no máximo 90 dias por vez), juntados num arquivo só com o cabeçalho na linha 1: `Código do Título`, `Parcela`, `Plano de Conta`, `Fornecedor`, `Descrição`, `Nº Documento`, `Vencimento/Previsão`, `Valor (R$)`, `Status` (PAG, AND, ATR), `Data Pagamento`, `Valor Pago (R$)`.
+
+- Casam pelo código + parcela, gravados na descrição como `[OI-P 123 1/3]`. Rodar de novo não duplica.
+- PAG entra como paga, com a data do pagamento; AND e ATR entram em aberto. Tudo na área Oficina.
+- O plano de contas antigo vira uma categoria do sistema (`OficinaInteligente::categoriaPagar`) e fica escrito na descrição.
+- Faturas de cartão vêm com valor previsto zero: se pagas, entram com o valor pago; se em aberto, não entram (relatório `conta_pagar_sem_valor`).
+
 ## O que NÃO é importado, de propósito
 
 - **Saldo do estoque.** No sistema antigo nenhum produto tinha saldo positivo (2.437 zerados e 1.929 negativos). Todos entram com saldo zero. No primeiro dia, faça a contagem em **Balanço de estoque**, no menu do sistema (dá para lançar por planilha).
@@ -49,5 +61,7 @@ Ficam em `storage/app/importacao/<data>/` (abrem no Excel):
 | `documento_invalido.csv` | CPF/CNPJ inválido ou repetido: o cliente entra sem documento. |
 | `ncm_invalido.csv` | NCM sem 8 dígitos: o produto entra sem NCM. Precisa corrigir antes de emitir nota. |
 | `titulo_sem_cliente.csv` | Título sem cliente achado: entra com o nome na descrição. |
+| `conta_pagar_sem_fornecedor.csv` | Conta a pagar sem fornecedor achado pelo nome: entra com o nome na descrição. |
+| `conta_pagar_sem_valor.csv` | Fatura em aberto com valor zero no sistema antigo: não entra. Lance quando a fatura chegar. |
 
 Na exportação de 26/11/2026: 21 placas com mais de um dono, 13 OS sem cliente, nenhum NCM ou documento inválido.

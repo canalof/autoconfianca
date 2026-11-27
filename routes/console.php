@@ -371,7 +371,7 @@ Schedule::command('torque:lembretes')->dailyAt('09:00')->withoutOverlapping();
  * Importa a exportação do Oficina Inteligente (veja docs/importacao-oficina-inteligente.md).
  * --simular roda tudo e desfaz no final, só para ver os totais e os relatórios.
  */
-Artisan::command('autoconfianca:importar {pasta : pasta com Estoque_Completo, Clientes, Fornecedores e Contas_a_Receber (.xlsx)} {--os= : pasta com os OS_com_Itens_*.xlsx} {--simular}', function () {
+Artisan::command('autoconfianca:importar {pasta : pasta com Estoque_Completo, Clientes, Fornecedores, Contas_a_Receber e Contas_a_Pagar (.xlsx)} {--os= : pasta com os OS_com_Itens_*.xlsx} {--simular}', function () {
     $pasta = rtrim($this->argument('pasta'), '/');
     $achar = function (string $dir, string $prefixo): ?string {
         $xlsx = glob("{$dir}/{$prefixo}*.xlsx") ?: [];
@@ -416,6 +416,10 @@ Artisan::command('autoconfianca:importar {pasta : pasta com Estoque_Completo, Cl
                 $this->line('Importando contas a receber…');
                 $imp->contasAReceber($arq);
             }
+            if ($arq = $achar($pasta, 'Contas_a_Pagar')) {
+                $this->line('Importando contas a pagar…');
+                $imp->contasAPagar($arq);
+            }
             $simular ? DB::rollBack() : DB::commit();
         });
     } catch (\Throwable $e) {
@@ -445,4 +449,4 @@ Artisan::command('autoconfianca:importar {pasta : pasta com Estoque_Completo, Cl
     }
 
     return 0;
-})->purpose('Importa produtos, clientes, fornecedores, veículos, OS antigas e contas a receber do Oficina Inteligente');
+})->purpose('Importa produtos, clientes, fornecedores, veículos, OS antigas, contas a receber e contas a pagar do Oficina Inteligente');

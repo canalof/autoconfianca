@@ -4,6 +4,7 @@ namespace App\Services\Importacao;
 
 use App\Models\Categoria;
 use App\Models\Cliente;
+use App\Models\ContaPagar;
 use App\Models\ContaReceber;
 use App\Models\Fornecedor;
 use App\Models\HistoricoOsAnterior;
@@ -30,6 +31,8 @@ class OficinaInteligente
         'placa_com_mais_de_um_dono' => [['placa', 'donos_nas_os', 'dono_escolhido']],
         'os_sem_cliente_no_cadastro' => [['os', 'data', 'cliente_na_os', 'placa', 'motivo']],
         'titulo_sem_cliente' => [['titulo', 'parcela', 'cliente', 'valor']],
+        'conta_pagar_sem_fornecedor' => [['titulo', 'parcela', 'fornecedor', 'valor']],
+        'conta_pagar_sem_valor' => [['titulo', 'parcela', 'fornecedor', 'descricao', 'vencimento']],
     ];
 
     public array $totais = [];
@@ -277,6 +280,92 @@ class OficinaInteligente
             $c++;
         }
         $this->totais['contas_a_receber'] = "{$c} títulos lançados";
+    }
+
+    /**
+     * Contas a pagar (pagas e em aberto). Casam pelo código do título + parcela, gravados na
+     * descrição como "[OI-P 123 1/3]". Pagas entram como pagas, com a data do pagamento.
+     * O plano de contas antigo vira uma das categorias do sistema e fica escrito na descrição.
+     */
+    public function contasAPagar(string $arquivo): void
+    {
+        $porNome = Fornecedor::get(['id', 'nome'])->groupBy(fn ($f) => self::chaveNome($f->nome));
+        $abertas = $pagas = 0;
+        foreach (LeitorXlsx::linhas($arquivo) as $l) {
+            $titulo = trim((string) ($l['Código do Título'] ?? ''));
+            if ($titulo === '') {
+                continue;
+            }
+            $parcela = trim((string) ($l['Parcela'] ?? ''));
+            $paga = mb_strtoupper(trim((string) ($l['Status'] ?? ''))) === 'PAG';
+            // Faturas de cartão vêm com valor previsto zero; quando pagas, vale o valor pago.
+            $valor = self::centavos($l['Valor (R$)'] ?? null) ?: ($paga ? self::centavos($l['Valor Pago (R$)'] ?? null) : 0);
+            if ($valor <= 0) {
+                $this->relatorios['conta_pagar_sem_valor'][] = [$titulo, $parcela, $l['Fornecedor'] ?? '', $l['Descrição'] ?? '', $l['Vencimento/Previsão'] ?? ''];
+
+                continue;
+            }
+            $marca = "[OI-P {$titulo} {$parcela}]";
+            if (ContaPagar::where('descricao', 'like', "%{$marca}%")->exists()) {
+                continue;
+            }
+            $nome = trim((string) ($l['Fornecedor'] ?? ''));
+            $cands = $nome !== '' ? $porNome->get(self::chaveNome($nome)) : null;
+            $fornecedorId = $cands && $cands->count() === 1 ? $cands->first()->id : null;
+            if (! $fornecedorId && $nome !== '') {
+                $this->relatorios['conta_pagar_sem_fornecedor'][] = [$titulo, $parcela, $nome, number_format($valor / 100, 2, ',', '')];
+            }
+            $plano = trim((string) ($l['Plano de Conta'] ?? ''));
+            $desc = trim((string) ($l['Descrição'] ?? ''));
+            $texto = implode(' · ', array_filter([
+                $desc !== '' ? $desc : 'Conta do Oficina Inteligente',
+                $plano !== '' && mb_strtoupper($plano) !== mb_strtoupper($desc) ? $plano : null,
+                $fornecedorId ? null : ($nome ?: null),
+            ]));
+            $vencimento = LeitorXlsx::data($l['Vencimento/Previsão'] ?? null) ?? today()->toDateString();
+            ContaPagar::create([
+                'fornecedor_id' => $fornecedorId,
+                'categoria' => self::categoriaPagar($plano),
+                'descricao' => mb_substr(mb_substr($texto, 0, 200 - mb_strlen($marca) - 1).' '.$marca, 0, 200),
+                'documento' => self::texto($l['Nº Documento'] ?? null, 40),
+                'valor_centavos' => $valor,
+                'vencimento' => $vencimento,
+                'status' => $paga ? 'paga' : 'aberta',
+                'pago_em' => $paga ? (LeitorXlsx::data($l['Data Pagamento'] ?? null) ?? $vencimento).' 12:00:00' : null,
+                'area' => 'oficina',
+            ]);
+            $paga ? $pagas++ : $abertas++;
+        }
+        $this->totais['contas_a_pagar'] = "{$abertas} em aberto e {$pagas} pagas lançadas";
+    }
+
+    /** Plano de contas do Oficina Inteligente → categoria de ContaPagar::CATEGORIAS. */
+    public static function categoriaPagar(string $plano): string
+    {
+        $p = mb_strtolower(Str::ascii($plano));
+        $regras = [
+            'Frota: IPVA, licenciamento e seguro' => ['ipva', 'licenciamento', 'seguro de veiculo', 'dpvat'],
+            'Frota: financiamento' => ['financiamento', 'consorcio'],
+            'Multas de trânsito' => ['multa de veiculo'],
+            'Frota: manutenção' => ['veiculo da empresa', 'manutencao do veiculo'],
+            'Salários' => ['salario', '13', 'ferias', 'fgts', 'inss', 'rescisao', 'vale', 'hora extra', 'pro-labore', 'adiantamento', 'funcionario', 'cesta', 'plano de saude', 'exame', 'uniforme', 'participacao'],
+            'Impostos' => ['das/', 'simples', 'darf', 'iss', 'iptu', 'iof', 'contribuicao sindical'],
+            'Aluguel' => ['aluguel'],
+            'Energia e água' => ['energia', 'agua'],
+            'Internet e telefone' => ['internet', 'telefone', 'provedor', 'tv a cabo'],
+            'Ferramentas e equipamentos' => ['ferramenta', 'maquina', 'equipamento', 'computador', 'moveis'],
+            'Sistemas e serviços' => ['sistema', 'software', 'contador', 'consultoria', 'google', 'sms', 'advogado', 'alarme', 'propaganda', 'grafica', 'prestacao de servico', 'tarifa', 'taxa de adm', 'taxa de ant'],
+            'Peças e fornecedores' => ['peca', 'distribuidor', 'concessionaria', 'estoque', 'frete', 'transportador', 'acacia', 'fatura'],
+        ];
+        foreach ($regras as $categoria => $palavras) {
+            foreach ($palavras as $w) {
+                if (str_contains($p, $w)) {
+                    return $categoria;
+                }
+            }
+        }
+
+        return 'Outros';
     }
 
     private function documento(string $tipo, string $codigo, string $nome, ?string $doc): ?string
