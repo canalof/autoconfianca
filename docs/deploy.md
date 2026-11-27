@@ -6,7 +6,7 @@ Todo push na `main` roda os **Testes**. Se passarem, o workflow **Deploy** (`.gi
 2. entra no servidor por SSH como o usuário `deploy`;
 3. faz o **backup do banco** (`php artisan torque:backup`, em `storage/app/backups`). Se falhar, para aqui e nada muda;
 4. `php artisan down`;
-5. envia os arquivos com `rsync` (só o que mudou; apaga arquivos que saíram do código). **Nunca toca** em `.env`, `storage/`, `public/storage` e `bootstrap/cache/`;
+5. envia os arquivos com `rsync` (só o que mudou; apaga arquivos que saíram do código). **Nunca toca** em `.env`, `storage/`, `public/storage`, `public/demonstracoes/` (modelos de site que só existem no servidor) e `bootstrap/cache/`;
 6. `migrate --force`, `package:discover`, caches de config/rotas/telas/eventos, recarrega o PHP-FPM e `php artisan up`;
 7. confere se `APP_URL/entrar` responde 200.
 
