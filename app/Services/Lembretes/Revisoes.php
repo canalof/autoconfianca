@@ -33,6 +33,46 @@ class Revisoes
         'Alinhamento e balanceamento' => ['Alinhamento e balanceamento', 6, 10000, '/ALINHAMENTO|BALANCEAMENTO/', null],
     ];
 
+    /**
+     * Quais serviços de revisão um item de OS representa, pela descrição
+     * (ex.: "FILTRO DE ÓLEO MOTOR" → Troca de óleo e filtro). Mesmas regras do histórico.
+     *
+     * @return string[] nomes de SERVICOS
+     */
+    public static function servicosDoTexto(?string $descricao): array
+    {
+        $texto = trim(mb_strtoupper(Str::ascii((string) $descricao)));
+        if ($texto === '') {
+            return [];
+        }
+        $achados = [];
+        foreach (self::SERVICOS as $nome => [, , , $padrao, $excecao]) {
+            if (preg_match($padrao, $texto) && (! $excecao || ! preg_match($excecao, $texto))) {
+                $achados[] = $nome;
+            }
+        }
+
+        return $achados;
+    }
+
+    /**
+     * Serviços de revisão do catálogo com prazo, pelo nome de SERVICOS.
+     *
+     * @return array<string, Servico> nome em SERVICOS => serviço do catálogo
+     */
+    public static function catalogo(): array
+    {
+        $todos = Servico::where(fn ($q) => $q->whereNotNull('revisao_meses')->orWhereNotNull('revisao_km'))->get();
+        $r = [];
+        foreach (array_keys(self::SERVICOS) as $nome) {
+            if ($s = $todos->first(fn ($x) => self::chave($x->nome) === self::chave($nome))) {
+                $r[$nome] = $s;
+            }
+        }
+
+        return $r;
+    }
+
     /** @return array{criados: string[], prazos: string[]} */
     public function servicosPadrao(): array
     {
@@ -81,10 +121,11 @@ class Revisoes
                     $donoNaUltimaOs[$os->veiculo_id] = $os->cliente_id;
                     foreach ((array) $os->itens as $item) {
                         // Só a descrição: o grupo (ex.: ARREFECIMENTO) junta peças que não são a troca em si
-                        $texto = trim(mb_strtoupper(Str::ascii((string) ($item['descricao'] ?? ''))));
-                        foreach ($catalogo as $nome => [, $padrao, $excecao]) {
-                            if (preg_match($padrao, $texto) && (! $excecao || ! preg_match($excecao, $texto))) {
-                                $ultimo[$os->veiculo_id][$nome] = $os->data->toDateString();
+                        foreach (self::servicosDoTexto($item['descricao'] ?? null) as $regra) {
+                            foreach ($catalogo as $nome => $c) {
+                                if (self::chave($nome) === self::chave($regra)) {
+                                    $ultimo[$os->veiculo_id][$nome] = $os->data->toDateString();
+                                }
                             }
                         }
                     }

@@ -176,6 +176,24 @@ class EstoqueFinanceiroTest extends TestCase
         });
     }
 
+    public function test_lembrete_nasce_pelos_itens_da_os_mesmo_sem_o_servico_do_catalogo(): void
+    {
+        $u = $this->novaEmpresa();
+        $this->artisan('autoconfianca:servicos-padrao')->assertSuccessful();
+        $os = $this->osPronta($u); // serviço "Troca de óleo" (6 meses) + peça "Filtro de óleo"
+        $this->em($u, fn () => $os->itens()->create(['tipo' => 'servico', 'descricao' => 'ALINHAMENTO + BALANCEAMENTO', 'quantidade' => 1,
+            'valor_unitario_centavos' => 0, 'situacao' => 'aprovado']));
+        $this->post("/os/{$os->id}/receber", ['pagamentos' => [['forma' => 'pix', 'valor' => '200,00']], 'entregar' => 1])->assertSessionHasNoErrors();
+
+        $nomes = $this->em($u, fn () => Lembrete::orderBy('descricao')->pluck('descricao')->all());
+        // "Troca de óleo" do catálogo já cobre o filtro de óleo; o alinhamento foi reconhecido pela descrição
+        $this->assertSame(['Alinhamento e balanceamento', 'Troca de óleo'], $nomes);
+        $this->assertSame(today()->addMonths(6)->toDateString(), $this->em($u, fn () => Lembrete::where('descricao', 'Alinhamento e balanceamento')->value('data_prevista'))->toDateString());
+
+        $outra = $this->novaEmpresa('Outra');
+        $this->assertSame(0, $this->em($outra, fn () => Lembrete::count()));
+    }
+
     public function test_pagamento_dividido_com_parcelas_e_exigencia_do_caixa_para_dinheiro(): void
     {
         $u = $this->novaEmpresa();

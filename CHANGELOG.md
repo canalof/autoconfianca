@@ -7,6 +7,7 @@
 - **WhatsApp desconectado** aparece no painel (`torque:whatsapp-estado` a cada 10 min + evento da Evolution); ao reconectar, reenvia o que falhou.
 - Tela **Agenda › WhatsApp**: respostas dos clientes, situação das mensagens enviadas e **Conectar WhatsApp**: QR Code (renova sozinho) ou código de 8 dígitos, direto no sistema.
 - **Lembretes de revisão**: atrasados saem aos poucos (20 por dia), segundo aviso 14 dias depois se o carro não voltou, vários do mesmo carro numa mensagem, "digitando…" e pausa entre envios. Rodapé "responda PARAR".
+- Na entrega da OS, o lembrete também nasce pelos itens ("filtro de óleo", "alinhamento", "fluido de freio"...), sem precisar lançar o serviço do catálogo; voltar com o carro encerra o lembrete já enviado.
 - `autoconfianca:servicos-padrao` (troca de óleo, revisão, filtros, fluido de freio, correia dentada, arrefecimento, alinhamento, com prazos) e `autoconfianca:lembretes-historico` (lembretes a partir das OS antigas do Oficina Inteligente, com `--simular`).
 - 10 testes novos (163 no total).
 

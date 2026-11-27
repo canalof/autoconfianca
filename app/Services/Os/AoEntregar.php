@@ -6,6 +6,7 @@ use App\Models\Comissao;
 use App\Models\Lembrete;
 use App\Models\OrdemServico;
 use App\Models\User;
+use App\Services\Lembretes\Revisoes;
 
 /**
  * O que acontece quando o carro é entregue:
@@ -134,22 +135,50 @@ class AoEntregar
         }
     }
 
+    /**
+     * Lembrete da próxima revisão para cada serviço com prazo:
+     * - serviços do catálogo lançados na OS com prazo (revisao_meses / revisao_km);
+     * - e itens reconhecidos pela descrição (ex.: "FILTRO DE ÓLEO", "ALINHAMENTO"), mesmo lançados só como peça,
+     *   usando o prazo do serviço de revisão do catálogo (Revisoes::SERVICOS).
+     */
     private function gerarLembretes(OrdemServico $os): void
     {
-        foreach ($os->itens as $item) {
+        if (! $os->veiculo_id) {
+            return;
+        }
+        $prazos = [];    // nome do lembrete => [meses, km]
+        $cobertos = [];  // regras já cobertas por um serviço do catálogo com prazo (evita "Troca de óleo" + "Troca de óleo e filtro")
+        $detectados = [];
+        $aprovados = $os->itens->where('situacao', 'aprovado');
+        foreach ($aprovados as $item) {
             $s = $item->servico;
-            if ($item->situacao !== 'aprovado' || $item->tipo !== 'servico' || ! $s || (! $s->revisao_meses && ! $s->revisao_km)) {
-                continue;
+            if ($item->tipo === 'servico' && $s && ($s->revisao_meses || $s->revisao_km)) {
+                $prazos[$s->nome] = [$s->revisao_meses, $s->revisao_km];
+                $cobertos = array_merge($cobertos, Revisoes::servicosDoTexto($s->nome), [$s->nome]);
             }
+            $detectados = array_merge($detectados, Revisoes::servicosDoTexto($item->descricao ?: ($item->produto?->nome ?? $s?->nome)));
+        }
+        $detectados = array_diff(array_unique($detectados), $cobertos);
+        if ($detectados) {
+            $catalogo = Revisoes::catalogo();
+            foreach ($detectados as $n) {
+                if (isset($catalogo[$n]) && ! isset($prazos[$catalogo[$n]->nome])) {
+                    $prazos[$catalogo[$n]->nome] = [$catalogo[$n]->revisao_meses, $catalogo[$n]->revisao_km];
+                }
+            }
+        }
+
+        foreach ($prazos as $nome => [$meses, $km]) {
             // Substitui o lembrete antigo do mesmo serviço para este carro
-            Lembrete::where('veiculo_id', $os->veiculo_id)->where('descricao', $s->nome)->where('status', 'pendente')->update(['status' => 'descartado']);
+            Lembrete::where('veiculo_id', $os->veiculo_id)->where('descricao', $nome)->whereIn('status', ['pendente', 'enviado'])
+                ->update(['status' => 'descartado']);
             Lembrete::create([
                 'veiculo_id' => $os->veiculo_id,
                 'cliente_id' => $os->cliente_id,
                 'ordem_servico_id' => $os->id,
-                'descricao' => $s->nome,
-                'data_prevista' => today()->addMonths($s->revisao_meses ?: 6),
-                'km_previsto' => $s->revisao_km && $os->km_entrada ? $os->km_entrada + $s->revisao_km : null,
+                'descricao' => $nome,
+                'data_prevista' => today()->addMonths($meses ?: 6),
+                'km_previsto' => $km && $os->km_entrada ? $os->km_entrada + $km : null,
             ]);
         }
     }

@@ -65,7 +65,7 @@ Além do webhook, `torque:whatsapp-estado` confere a conexão a cada 10 minutos.
 
 ## Lembretes de revisão
 
-- Nascem na entrega da OS, para serviços do catálogo com prazo (`Servico.revisao_meses` / `revisao_km`), ou das OS antigas do Oficina Inteligente (`autoconfianca:lembretes-historico`, regras em `Services/Lembretes/Revisoes::SERVICOS`; só para o dono atual do carro e só o que venceu há no máximo 120 dias).
+- Nascem na entrega da OS, para serviços do catálogo com prazo (`Servico.revisao_meses` / `revisao_km`) e para itens reconhecidos pela descrição (ex.: "FILTRO DE ÓLEO", "ALINHAMENTO", mesmo lançados só como peça), com o prazo do serviço de revisão do catálogo; ou das OS antigas do Oficina Inteligente (`autoconfianca:lembretes-historico`, regras em `Services/Lembretes/Revisoes::SERVICOS`; só para o dono atual do carro e só o que venceu há no máximo 120 dias).
 - `torque:lembretes` (9h): todos os que vencem nos próximos 7 dias; os atrasados (até 120 dias) e os segundos avisos no máximo `WHATSAPP_LEMBRETES_ATRASADOS_POR_DIA` (padrão 20) por dia; vários lembretes do mesmo carro numa mensagem só; pausa de `WHATSAPP_INTERVALO_SEGUNDOS` (padrão 6) entre mensagens e "digitando…" de `WHATSAPP_DIGITANDO_MS` (padrão 1500).
 - Segundo aviso: uma vez, 14 dias depois do primeiro, se o carro não teve OS nem agendamento desde então.
 - Não envia para quem respondeu PARAR nem se o carro mudou de dono. Toda mensagem termina com "Para não receber mais lembretes, responda PARAR."
