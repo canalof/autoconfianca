@@ -62,7 +62,7 @@ class AgendaController extends Controller
             }
             $cliente = $atual->cliente_id ? Cliente::findOrFail($atual->cliente_id) : null;
             $veiculo = $atual->veiculo_id ? $cliente?->veiculos()->lockForUpdate()->findOrFail($atual->veiculo_id) : null;
-            abort_if(! $atual->doSite() && (! $cliente || ! $veiculo), 404);
+            abort_if(! $atual->externo() && (! $cliente || ! $veiculo), 404);
             $horario = ['inicio' => $dados['inicio'], 'duracao_minutos' => $dados['duracao_minutos']];
             $request->merge(['encaixar' => false]);
             $this->verificarLotacao($request, $horario);
@@ -85,7 +85,7 @@ class AgendaController extends Controller
             report($e);
         }
         $aviso = $enviado ? ' O cliente recebeu a resposta no WhatsApp.'
-            : ($pedido->doSite() ? ' Avise o cliente pelo WhatsApp.' : ' O cliente vê a resposta na área do cliente.');
+            : ($pedido->externo() ? ' Avise o cliente pelo WhatsApp.' : ' O cliente vê a resposta na área do cliente.');
 
         return back()->with('ok', 'Pedido respondido.'.$aviso);
     }
@@ -93,6 +93,9 @@ class AgendaController extends Controller
     /** O horário escolhido atende o que o cliente pediu? (mesmo dia e, no site, dentro do período). */
     private function dentroDoPedido(AgendaSolicitacao $pedido, Carbon $inicio): bool
     {
+        if ($pedido->origem === 'whatsapp') {
+            return false; // respondeu ao lembrete sem escolher dia: o horário vai como proposta
+        }
         if (! $pedido->periodo) {
             return $pedido->preferencia->format('Y-m-d H:i') === $inicio->format('Y-m-d H:i');
         }

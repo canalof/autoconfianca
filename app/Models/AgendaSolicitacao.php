@@ -32,6 +32,21 @@ class AgendaSolicitacao extends Model
         return $this->origem === 'site';
     }
 
+    /** Pedido que não veio pela área do cliente (site ou resposta no WhatsApp): a recepção avisa o cliente. */
+    public function externo(): bool
+    {
+        return in_array($this->origem, ['site', 'whatsapp'], true);
+    }
+
+    public function origemRotulo(): string
+    {
+        return match ($this->origem) {
+            'site' => 'Site',
+            'whatsapp' => 'WhatsApp',
+            default => 'Área do cliente',
+        };
+    }
+
     /** Nome e WhatsApp de quem pediu: o digitado no site ou o do cadastro. */
     public function nomeContato(): string
     {

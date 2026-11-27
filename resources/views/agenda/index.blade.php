@@ -13,6 +13,7 @@
         </div>
         <div class="flex flex-wrap gap-2">
         <a href="{{ route('lembretes.index') }}" class="btn">Lembretes de revisão</a>
+        <a href="{{ route('whatsapp.index') }}" class="btn">WhatsApp</a>
         @can('agenda.editar')
             <a href="{{ $editando ? route('agenda.index', ['semana' => $inicio->toDateString()]) : '' }}#form-agenda" class="btn-sinal">Novo agendamento</a>
         @endcan
@@ -30,7 +31,7 @@
                 @endphp
                 <article class="space-y-2 rounded border border-linha p-3">
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $pedido->doSite() ? 'bg-[#e6eef8] text-[#1f4f82]' : 'bg-fundo text-suave' }}">{{ $pedido->doSite() ? 'Site' : 'Área do cliente' }}</span>
+                        <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $pedido->externo() ? 'bg-[#e6eef8] text-[#1f4f82]' : 'bg-fundo text-suave' }}">{{ $pedido->origemRotulo() }}</span>
                         @if ($placaPedido)<x-placa :placa="$placaPedido" />@endif
                         <span class="font-medium">{{ $pedido->nomeContato() }}</span>
                         @if ($pedido->doSite() && ! $pedido->cliente_id)<span class="text-xs text-suave">sem cadastro</span>@endif

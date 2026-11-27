@@ -33,7 +33,7 @@ class Empresa extends Model
         'nome_fantasia', 'razao_social', 'cnpj', 'telefone', 'email', 'cidade', 'uf', 'ativo',
         'inscricao_estadual', 'inscricao_municipal', 'codigo_municipio', 'logradouro', 'numero', 'bairro', 'cep',
         'regime_tributario', 'cfop_padrao', 'csosn_padrao', 'item_lista_servico', 'aliquota_iss', 'serie_nfce',
-        'fiscal_ambiente', 'fiscal_token', 'whatsapp_instancia',
+        'fiscal_ambiente', 'fiscal_token', 'whatsapp_instancia', 'whatsapp_estado', 'whatsapp_estado_em',
         'plano_id', 'assinatura_status', 'trial_ate', 'cobranca_cliente_id', 'cobranca_assinatura_id', 'proximo_vencimento', 'suspensa_em',
         'estoque_negativo', 'modulo_locacao', 'modulos', 'agenda_capacidade', 'orcamento_validade_dias', 'cnh_retencao_dias',
     ];
@@ -50,7 +50,7 @@ class Empresa extends Model
     {
         return ['ativo' => 'boolean', 'fiscal_token' => 'encrypted', 'aliquota_iss' => 'decimal:2', 'regime_tributario' => 'integer', 'serie_nfce' => 'integer',
             'trial_ate' => 'date', 'proximo_vencimento' => 'date', 'suspensa_em' => 'datetime', 'estoque_negativo' => 'boolean', 'modulo_locacao' => 'boolean', 'modulos' => 'array',
-            'agenda_capacidade' => 'integer', 'orcamento_validade_dias' => 'integer', 'cnh_retencao_dias' => 'integer'];
+            'agenda_capacidade' => 'integer', 'orcamento_validade_dias' => 'integer', 'cnh_retencao_dias' => 'integer', 'whatsapp_estado_em' => 'datetime'];
     }
 
     public function optanteSimples(): bool

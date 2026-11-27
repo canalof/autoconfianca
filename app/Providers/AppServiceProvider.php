@@ -43,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(30)->by('login-ip|'.$r->ip()),
         ]);
         RateLimiter::for('placa', fn (Request $r) => Limit::perMinute(30)->by('placa|'.($r->user()?->id ?? $r->ip())));
+        RateLimiter::for('webhook-evolution', fn (Request $r) => Limit::perMinute(600)->by('webhook-evolution|'.$r->ip()));
         RateLimiter::for('agendar-site', fn (Request $r) => [Limit::perHour(6)->by('agendar|'.$r->ip()), Limit::perDay(300)->by('agendar-total')]);
         RateLimiter::for('orcamento', fn (Request $r) => Limit::perMinute(60)->by('orcamento|'.$r->ip()));
         RateLimiter::for('orcamento-aprovar', fn (Request $r) => Limit::perMinute(10)->by('orcamento-aprovar|'.$r->route('token').'|'.$r->ip()));

@@ -14,6 +14,8 @@
     </div>
 
     @php $avisos = collect([
+        auth()->user()->can('agenda.ver') && $whatsappEstado && $whatsappEstado !== 'open' ? ['WhatsApp da oficina desconectado: as mensagens automáticas não estão saindo', route('whatsapp.index'), 'Ver'] : null,
+        auth()->user()->can('agenda.ver') && $pedidosRemarcar ? [$pedidosRemarcar.' '.($pedidosRemarcar === 1 ? 'cliente quer' : 'clientes querem').' remarcar pelo WhatsApp', route('whatsapp.index'), 'Ver'] : null,
         auth()->user()->can('caixa.operar') && ! $caixa ? ['O caixa está fechado', route('caixa.index'), 'Abrir caixa'] : null,
         auth()->user()->can('estoque.ver') && $estoqueBaixo ? [$estoqueBaixo.' '.($estoqueBaixo === 1 ? 'produto' : 'produtos').' no estoque mínimo', route('produtos.index', ['filtro' => 'minimo']), 'Ver'] : null,
         auth()->user()->can('financeiro.ver') && $receberVencido ? ['R$ '.number_format($receberVencido / 100, 2, ',', '.').' a receber vencido', route('receber.index', ['filtro' => 'vencidas']), 'Cobrar'] : null,

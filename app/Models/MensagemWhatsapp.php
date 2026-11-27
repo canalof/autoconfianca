@@ -11,10 +11,10 @@ class MensagemWhatsapp extends Model
 
     protected $table = 'mensagens_whatsapp';
 
-    protected $fillable = ['empresa_id', 'destino', 'tipo', 'referencia_id', 'texto', 'status', 'tentativas', 'erro', 'enviada_em'];
+    protected $fillable = ['empresa_id', 'destino', 'tipo', 'referencia_id', 'texto', 'status', 'tentativas', 'erro', 'enviada_em', 'externo_id', 'entregue_em', 'lida_em'];
 
     protected function casts(): array
     {
-        return ['enviada_em' => 'datetime'];
+        return ['enviada_em' => 'datetime', 'entregue_em' => 'datetime', 'lida_em' => 'datetime'];
     }
 }

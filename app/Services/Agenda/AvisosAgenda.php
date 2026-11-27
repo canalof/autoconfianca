@@ -29,7 +29,7 @@ class AvisosAgenda
     public function avisarOficina(Empresa $empresa, AgendaSolicitacao $s): int
     {
         $linhas = array_filter([
-            'Novo pedido de agendamento '.($s->doSite() ? 'pelo site' : 'pela área do cliente'),
+            'Novo pedido de agendamento '.match ($s->origem) { 'site' => 'pelo site', 'whatsapp' => 'pelo WhatsApp (respondeu ao lembrete)', default => 'pela área do cliente' },
             $s->nomeContato().' · '.$s->telefoneContato(),
             trim(($s->carro ?: $s->veiculo?->modelo).' '.Placa::formatar($s->placa ?: $s->veiculo?->placa)) ?: null,
             'Serviço: '.$s->servico,
@@ -54,6 +54,8 @@ class AvisosAgenda
             $a && $a->status === 'confirmado' => 'Olá, '.$nome.'! Seu horário na '.$empresa->nome_fantasia.' está confirmado: '
                 .$a->inicio->translatedFormat('l, d/m').' às '.$a->inicio->format('H:i').'.'.($endereco ? ' Endereço: '.$endereco.'.' : '')
                 .' Se precisar remarcar, é só responder.',
+            $a && $a->status === 'proposto' && $s->origem === 'whatsapp' => 'Olá, '.$nome.'! Podemos atender '
+                .$a->inicio->translatedFormat('l, d/m').' às '.$a->inicio->format('H:i').' para '.$s->servico.'. Responda aqui para confirmar.',
             $a && $a->status === 'proposto' => 'Olá, '.$nome.'! Para '.$s->quandoPedido().' não temos horário livre. Podemos atender '
                 .$a->inicio->translatedFormat('l, d/m').' às '.$a->inicio->format('H:i').'?'
                 .($s->doSite() ? ' Responda aqui para confirmar.' : ' Responda aqui ou confirme na área do cliente.'),

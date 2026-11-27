@@ -59,6 +59,9 @@ Route::prefix('area-do-cliente')->name('cliente.')->controller(\App\Http\Control
 });
 
 Route::get('/cliente/{token}', [\App\Http\Controllers\PortalClienteController::class, 'ver'])->middleware('throttle:orcamento')->name('portal.ver');
+// Webhook da Evolution API (WhatsApp): sem login e sem CSRF, protegido por token; ver EvolutionWebhookController.
+Route::post('/webhook/evolution', \App\Http\Controllers\EvolutionWebhookController::class)->middleware('throttle:webhook-evolution')->name('webhook.evolution');
+Route::post('/webhooks/evolution', \App\Http\Controllers\EvolutionWebhookController::class)->middleware('throttle:webhook-evolution');
 // Pedido de agendamento do site institucional (estático): sem login e sem CSRF; ver AgendamentoSiteController.
 Route::post('/agendar', \App\Http\Controllers\AgendamentoSiteController::class)->middleware('throttle:agendar-site')->name('site.agendar');
 Route::post('/cliente/{token}/agendamento', [\App\Http\Controllers\PortalClienteController::class, 'solicitar'])->middleware('throttle:orcamento')->name('portal.solicitar');
@@ -72,6 +75,7 @@ Route::middleware('throttle:orcamento')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/whatsapp', [\App\Http\Controllers\WhatsappController::class, 'index'])->name('whatsapp.index');
     Route::get('/financeiro/pix', [\App\Http\Controllers\PixController::class, 'index'])->middleware('modulo:bancos')->name('pix.index');
     Route::post('/financeiro/pix', [\App\Http\Controllers\PixController::class, 'store'])->middleware('throttle:10,1')->middleware('modulo:bancos')->name('pix.store');
     Route::post('/financeiro/pix/{cobranca}/cancelar-rascunho', [\App\Http\Controllers\PixController::class, 'cancelarRascunho'])->middleware('throttle:10,1')->middleware('modulo:bancos')->name('pix.cancelar-rascunho');

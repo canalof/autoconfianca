@@ -1,7 +1,7 @@
 <x-app titulo="Lembretes de revisão">
     <h1 class="mb-1">Lembretes de revisão</h1>
     <p class="mb-5 text-suave">Criados sozinhos na entrega do carro, para os serviços do catálogo que têm prazo de revisão (ex.: troca de óleo a cada 6 meses).
-        {{ $automatico ? 'O WhatsApp automático envia os próximos 7 dias todo dia às 9h.' : 'Abra o WhatsApp com a mensagem pronta e confirme o envio depois de enviá-la.' }}</p>
+        {{ $automatico ? 'O WhatsApp automático envia todo dia às 9h os que vencem nos próximos 7 dias. Os atrasados saem aos poucos ('.config('whatsapp.lembretes_atrasados_por_dia').' por dia) e, se o carro não voltar, vai um segundo aviso 14 dias depois. Quem responder PARAR não recebe mais.' : 'Abra o WhatsApp com a mensagem pronta e confirme o envio depois de enviá-la.' }}</p>
     @include('financeiro._abas', ['abas' => ['proximos' => 'Próximos 30 dias', 'todos' => 'Todos', 'enviados' => 'Enviados'], 'filtro' => $ver])
     <div class="card overflow-x-auto">
         <table class="tabela">

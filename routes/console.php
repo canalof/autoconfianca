@@ -84,16 +84,7 @@ Artisan::command('torque:lembretes', function (\App\Services\WhatsApp\WhatsApp $
             continue;
         }
         Tenant::com($empresa->id, function () use ($empresa, $whatsapp, &$enviados) {
-            $lembretes = \App\Models\Lembrete::with(['cliente', 'veiculo'])->where('status', 'pendente')
-                ->whereBetween('data_prevista', [today(), today()->addDays(7)])->get();
-            foreach ($lembretes as $l) {
-                if ($l->cliente?->aceita_whatsapp && ! $l->cliente->trashed() && $l->veiculo && ! $l->veiculo->trashed()
-                    && (! $l->inspecao_id || $l->veiculo->cliente_id === $l->cliente->id)
-                    && $whatsapp->enviar($empresa, $l->cliente->whatsapp ?: $l->cliente->telefone, $l->mensagem($empresa->nome_fantasia), 'lembrete', $l->id)) {
-                    $l->update(['status' => 'enviado', 'enviado_em' => now()]);
-                    $enviados++;
-                }
-            }
+            $enviados += app(\App\Services\WhatsApp\EnvioLembretes::class)->executar($empresa);
             $amanha = \App\Models\Agendamento::with('cliente')->whereBetween('inicio', [today()->addDay(), today()->addDay()->endOfDay()])
                 ->whereIn('status', ['agendado', 'confirmado'])->whereNull('lembrete_enviado_em')->get();
             foreach ($amanha as $a) {
@@ -101,16 +92,14 @@ Artisan::command('torque:lembretes', function (\App\Services\WhatsApp\WhatsApp $
                     continue; // cliente pediu para não receber
                 }
                 $txt = 'Olá, '.explode(' ', trim($a->nome))[0].'! Lembrando do seu horário amanhã às '.$a->inicio->format('H:i')
-                    .' na '.$empresa->nome_fantasia.' ('.$a->servico.'). Se precisar remarcar, é só responder.';
-                if ($whatsapp->enviar($empresa, $a->telefone ?: ($a->cliente?->whatsapp ?: $a->cliente?->telefone), $txt, 'agenda', $a->id)) {
+                    .' na '.$empresa->nome_fantasia.' ('.$a->servico.'). Pode confirmar respondendo SIM. Se precisar remarcar, é só responder.';
+                if ($whatsapp->enviar($empresa, $a->telefone ?: ($a->cliente?->whatsapp ?: $a->cliente?->telefone), $txt, 'agenda_vespera', $a->id)) {
                     $a->update(['lembrete_enviado_em' => now()]);
                     $enviados++;
                 }
             }
             // Nova tentativa das que falharam nas últimas 24 h (até 3 tentativas)
-            foreach (\App\Models\MensagemWhatsapp::where('status', 'falhou')->where('tentativas', '<', 3)->where('created_at', '>', now()->subDay())->get() as $m) {
-                $whatsapp->tentar($empresa, $m) && $enviados++;
-            }
+            $enviados += $whatsapp->reenviarFalhas($empresa);
         });
     }
     $this->info("{$enviados} mensagem(ns) enviada(s).");
@@ -450,3 +439,101 @@ Artisan::command('autoconfianca:importar {pasta : pasta com Estoque_Completo, Cl
 
     return 0;
 })->purpose('Importa produtos, clientes, fornecedores, veículos, OS antigas, contas a receber e contas a pagar do Oficina Inteligente');
+
+/*
+ * Catálogo de serviços de manutenção periódica com prazo (troca de óleo, revisão, filtros...).
+ * Só cria o que falta e preenche prazo vazio; não mexe em preço nem em prazo já preenchido.
+ */
+Artisan::command('autoconfianca:servicos-padrao', function () {
+    $empresa = Empresa::query()->orderBy('id')->first();
+    if (! $empresa) {
+        $this->error('Crie a empresa antes (php artisan torque:empresa ...).');
+
+        return 1;
+    }
+    $r = Tenant::com($empresa->id, fn () => app(\App\Services\Lembretes\Revisoes::class)->servicosPadrao());
+    $this->info(count($r['criados']).' serviço(s) criado(s)'.($r['criados'] ? ': '.implode(', ', $r['criados']) : '').'.');
+    if ($r['prazos']) {
+        $this->line('Prazo preenchido em: '.implode(', ', $r['prazos']).'.');
+    }
+    $this->line('Confira preços e prazos em Catálogo de serviços.');
+
+    return 0;
+})->purpose('Cadastra os serviços de manutenção periódica com prazo de revisão');
+
+/*
+ * Lembretes de revisão a partir das OS antigas do Oficina Inteligente (para o dono atual de cada carro).
+ * --simular mostra os totais e gera o relatório sem gravar.
+ */
+Artisan::command('autoconfianca:lembretes-historico {--simular}', function () {
+    $empresa = Empresa::query()->orderBy('id')->first();
+    if (! $empresa) {
+        $this->error('Crie a empresa antes (php artisan torque:empresa ...).');
+
+        return 1;
+    }
+    $simular = (bool) $this->option('simular');
+    $r = Tenant::com($empresa->id, function () use ($simular) {
+        DB::beginTransaction();
+        try {
+            $r = app(\App\Services\Lembretes\Revisoes::class)->lembretesDoHistorico();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+        $simular ? DB::rollBack() : DB::commit();
+
+        return $r;
+    });
+    if ($r['sem_catalogo']) {
+        $this->warn('Sem prazo no catálogo (rode autoconfianca:servicos-padrao): '.implode(', ', $r['sem_catalogo']));
+    }
+    $this->info(($simular ? 'SIMULAÇÃO: nada foi gravado. ' : '').$r['criados'].' lembrete(s) '.($simular ? 'seriam criados' : 'criados').'.');
+    foreach ($r['por_servico'] as $nome => $n) {
+        $this->line(str_pad($nome, 38).$n);
+    }
+    $cota = max(1, (int) config('whatsapp.lembretes_atrasados_por_dia', 20));
+    $this->newLine();
+    $this->line("Atrasados (venceram nos últimos ".\App\Services\WhatsApp\EnvioLembretes::DIAS_ATRASO_MAX." dias): {$r['atrasados']}  → saem {$cota} por dia, uns ".(int) ceil($r['atrasados'] / $cota).' dia(s)');
+    $this->line("Vencem nos próximos 30 dias: {$r['proximos_30']}  → saem 7 dias antes de vencer");
+    $this->line("Depois: {$r['depois']}");
+    $this->line("Ignorados: {$r['ignorados_antigos']} vencidos há mais de ".\App\Services\WhatsApp\EnvioLembretes::DIAS_ATRASO_MAX." dias, {$r['ignorados_dono']} de carros que mudaram de dono ou sem dono no cadastro");
+    $dir = storage_path('app/importacao/'.now()->format('Y-m-d_His'));
+    @mkdir($dir, 0750, true);
+    $f = fopen("{$dir}/lembretes_historico.csv", 'w');
+    fwrite($f, "\xEF\xBB\xBF");
+    foreach ($r['linhas'] as $l) {
+        fputcsv($f, $l, ';');
+    }
+    fclose($f);
+    $this->line('Lista completa: '.$dir.'/lembretes_historico.csv');
+
+    return 0;
+})->purpose('Cria lembretes de revisão/troca de óleo a partir das OS antigas do Oficina Inteligente');
+
+/*
+ * Confere a cada 10 minutos se o celular da oficina está conectado na Evolution.
+ * Desconectado: aparece um aviso no painel. Ao reconectar: reenvia o que falhou nas últimas 24 h.
+ * (Com o webhook ligado, a Evolution também avisa na hora pelo evento connection.update.)
+ */
+Artisan::command('torque:whatsapp-estado', function (\App\Services\WhatsApp\WhatsApp $whatsapp) {
+    foreach (Empresa::where('ativo', true)->whereNotNull('whatsapp_instancia')->get() as $empresa) {
+        $estado = $whatsapp->estado($empresa);
+        if ($estado === null) {
+            continue; // Evolution não respondeu: não muda o que se sabia
+        }
+        Tenant::com($empresa->id, function () use ($empresa, $estado, $whatsapp) {
+            $antes = $empresa->whatsapp_estado;
+            $empresa->forceFill(['whatsapp_estado' => $estado, 'whatsapp_estado_em' => now()])->save();
+            if ($estado === 'open' && $antes && $antes !== 'open') {
+                $whatsapp->reenviarFalhas($empresa, 24, 5);
+            }
+            if ($estado !== 'open' && $antes !== $estado) {
+                \Illuminate\Support\Facades\Log::warning('WhatsApp da oficina desconectado', ['empresa' => $empresa->id, 'estado' => $estado]);
+            }
+        });
+        $this->line("{$empresa->nome_fantasia}: {$estado}");
+    }
+})->purpose('Confere se o WhatsApp da oficina está conectado na Evolution');
+
+Schedule::command('torque:whatsapp-estado')->everyTenMinutes()->withoutOverlapping();

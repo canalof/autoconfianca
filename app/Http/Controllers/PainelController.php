@@ -33,7 +33,11 @@ class PainelController extends Controller
             'estoqueBaixo' => \App\Models\Produto::abaixoDoMinimo()->count(),
             'receberVencido' => (int) \App\Models\ContaReceber::where('status', 'aberta')->where('vencimento', '<', today())->sum('valor_centavos'),
             'pagarHoje' => (int) \App\Models\ContaPagar::where('status', 'aberta')->where('vencimento', '<=', today())->sum('valor_centavos'),
-            'lembretesSemana' => \App\Models\Lembrete::where('status', 'pendente')->where('data_prevista', '<=', today()->addDays(7))->count(),
+            // Com WhatsApp automático os lembretes saem sozinhos às 9h: o aviso de "para enviar" só vale sem ele
+            'lembretesSemana' => app(\App\Services\WhatsApp\WhatsApp::class)->disponivel(auth()->user()->empresa) ? 0
+                : \App\Models\Lembrete::where('status', 'pendente')->whereBetween('data_prevista', [today()->subDays(30), today()->addDays(7)])->count(),
+            'whatsappEstado' => app(\App\Services\WhatsApp\WhatsApp::class)->disponivel(auth()->user()->empresa) ? auth()->user()->empresa->whatsapp_estado : null,
+            'pedidosRemarcar' => \App\Models\MensagemRecebida::where('acao', 'pediu_remarcar')->whereNull('vista_em')->count(),
             'caixa' => \App\Models\Caixa::aberto(),
             'atrasadas' => OrdemServico::with(['veiculo', 'cliente'])
                 ->whereIn('status', [StatusOs::Aprovada->value, StatusOs::EmServico->value, StatusOs::Orcamento->value, StatusOs::Aguardando->value])
