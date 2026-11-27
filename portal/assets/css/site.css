@@ -271,3 +271,20 @@ button[aria-busy="true"]{opacity:.6;pointer-events:none}
 /* acesso do cliente no rodape */
 .foot__col a.foot__acesso{color:#fff;font-weight:600;width:fit-content;border-bottom:1px solid rgba(225,27,34,.6);padding-bottom:3px}
 .foot__col a.foot__acesso:hover{color:var(--brand);border-bottom-color:var(--brand)}
+
+/* Páginas de serviço (SEO local) */
+.phead__act{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.4rem}
+.svcpage{display:grid;gap:2.5rem}
+@media (min-width:860px){.svcpage{grid-template-columns:1fr 1fr}}
+.svcpage__list{margin:1rem 0 0;padding:0;list-style:none;display:grid;gap:.7rem}
+.svcpage__list li{position:relative;padding-left:1.6rem;line-height:1.55}
+.svcpage__list li::before{content:"";position:absolute;left:0;top:.55em;width:.55rem;height:.55rem;border-radius:2px;background:#E11B22}
+.faq{margin-top:1.2rem;display:grid;gap:.6rem;max-width:52rem}
+.faq__item{border:1px solid rgba(10,10,10,.12);border-radius:8px;background:#fff;padding:.9rem 1.1rem}
+.faq__item summary{cursor:pointer;font-weight:600}
+.faq__item p{margin:.6rem 0 0;line-height:1.6}
+.svcpage__onde,.svcpage__rel{margin-top:1.6rem;max-width:52rem;line-height:1.6}
+.svcpage__rel a{margin-right:.2rem}
+.svcpage__rel a+a::before{content:"· ";color:rgba(10,10,10,.35)}
+.svc__mais{display:inline-block;margin-right:1rem;font-weight:600}
+.phead .btn--ghost{color:#fff;border-color:rgba(255,255,255,.45)}.phead .btn--ghost:hover{background:#fff;color:#0A0A0A}
