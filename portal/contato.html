@@ -80,15 +80,18 @@
       <div>
         <p class="eyebrow">Agendamento</p>
         <h2 class="h2" style="margin-top:12px;font-size:clamp(1.7rem,3vw,2.4rem)">Reserve seu horário</h2>
-        <p style="margin-top:12px;color:var(--muted);max-width:46ch">Preencha e a mensagem abre pronta no WhatsApp da oficina.</p>
-        <form class="form-grid" data-wa="5519994827163" style="margin-top:26px">
+        <p style="margin-top:12px;color:var(--muted);max-width:46ch">Escolha o dia e o período. O pedido cai direto na agenda da oficina e a confirmação chega no seu WhatsApp.</p>
+        <form class="form-grid" data-wa="5519994827163" data-agendar="/sistema/agendar" style="margin-top:26px">
           <div class="field full"><label for="c-nome">Nome *</label><input class="input" id="c-nome" name="nome" required placeholder="Seu nome"></div>
           <div class="field"><label for="c-tel">WhatsApp *</label><input class="input" id="c-tel" name="telefone" data-phone required placeholder="(19) 90000-0000"></div>
           <div class="field"><label for="c-mail">E-mail</label><input class="input" id="c-mail" name="email" type="email" placeholder="voce@email.com"></div>
           <div class="field"><label for="c-car">Veículo</label><input class="input" id="c-car" name="veiculo" placeholder="Marca / modelo / ano"></div>
           <div class="field"><label for="c-placa">Placa</label><input class="input" id="c-placa" name="placa" maxlength="7" placeholder="ABC1D23"></div>
+          <div class="field"><label for="c-dia">Dia *</label><input class="input" id="c-dia" name="dia" type="date" required data-dia></div>
+          <div class="field"><label for="c-per">Período *</label><select class="input" id="c-per" name="periodo" required><option value="manha">Manhã (8h às 12h)</option><option value="tarde">Tarde (13h às 18h)</option></select></div>
+          <div class="armadilha" aria-hidden="true"><label>Não preencha<input name="site" tabindex="-1" autocomplete="off"></label></div>
           <div class="field full"><label for="c-msg">O que precisa?</label><textarea class="input" id="c-msg" name="mensagem" rows="3" placeholder="Barulho na suspensão, luz de injeção acesa..."></textarea></div>
-          <div class="full"><button class="btn btn--block" type="submit">Enviar pelo WhatsApp</button><p class="ok" data-ok hidden>Mensagem pronta no WhatsApp. Se a janela não abrir, chame no (19) 99482-7163.</p></div>
+          <div class="full"><button class="btn btn--block" type="submit">Pedir agendamento</button><p class="ok" data-ok hidden role="status"></p><p class="erro" data-erro hidden role="alert"></p><p class="nota">Sábado só de manhã. Domingo fechado.</p></div>
         </form>
       </div>
 

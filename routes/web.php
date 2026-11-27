@@ -59,6 +59,8 @@ Route::prefix('area-do-cliente')->name('cliente.')->controller(\App\Http\Control
 });
 
 Route::get('/cliente/{token}', [\App\Http\Controllers\PortalClienteController::class, 'ver'])->middleware('throttle:orcamento')->name('portal.ver');
+// Pedido de agendamento do site institucional (estático): sem login e sem CSRF; ver AgendamentoSiteController.
+Route::post('/agendar', \App\Http\Controllers\AgendamentoSiteController::class)->middleware('throttle:agendar-site')->name('site.agendar');
 Route::post('/cliente/{token}/agendamento', [\App\Http\Controllers\PortalClienteController::class, 'solicitar'])->middleware('throttle:orcamento')->name('portal.solicitar');
 Route::post('/cliente/{token}/agendamento/{solicitacao}/responder', [\App\Http\Controllers\PortalClienteController::class, 'responderProposta'])->whereNumber('solicitacao')->middleware('throttle:orcamento')->name('portal.proposta.responder');
 

@@ -37,7 +37,7 @@ class AgendaController extends Controller
             'porDia' => Agendamento::with(['veiculo', 'cliente'])->whereBetween('inicio', [$inicio, $fim])->orderBy('inicio')->get()
                 ->groupBy(fn ($a) => $a->inicio->toDateString()),
             'novo' => $this->novo($request),
-            'solicitacoes' => AgendaSolicitacao::with('veiculo')->where('status', 'pendente')->oldest('id')->paginate(15, ['*'], 'pedidos')->withQueryString(),
+            'solicitacoes' => AgendaSolicitacao::with(['veiculo', 'cliente'])->where('status', 'pendente')->oldest('id')->paginate(15, ['*'], 'pedidos')->withQueryString(),
             'clientes' => Cliente::orderBy('nome')->get(['id', 'nome', 'whatsapp', 'telefone']),
             'editando' => $request->query('editar') ? Agendamento::find($request->query('editar')) : null,
         ]);
@@ -51,29 +51,54 @@ class AgendaController extends Controller
             'inicio' => ['required_if:decisao,confirmar', 'nullable', 'date_format:Y-m-d\TH:i', 'after:now'],
             'duracao_minutos' => ['required_if:decisao,confirmar', 'nullable', 'integer', 'between:15,600'],
         ]);
-        DB::transaction(function () use ($request, $solicitacao, $dados) {
+        [$pedido, $agendamento] = DB::transaction(function () use ($request, $solicitacao, $dados) {
             Empresa::whereKey(Tenant::id())->lockForUpdate()->firstOrFail();
             $atual = AgendaSolicitacao::whereKey($solicitacao->id)->lockForUpdate()->firstOrFail();
             abort_unless($atual->status === 'pendente', 409);
             if ($dados['decisao'] === 'recusar') {
                 $atual->update(['status' => 'recusada']);
 
-                return;
+                return [$atual, null];
             }
-            $cliente = Cliente::findOrFail($atual->cliente_id);
-            $veiculo = $cliente->veiculos()->lockForUpdate()->findOrFail($atual->veiculo_id);
+            $cliente = $atual->cliente_id ? Cliente::findOrFail($atual->cliente_id) : null;
+            $veiculo = $atual->veiculo_id ? $cliente?->veiculos()->lockForUpdate()->findOrFail($atual->veiculo_id) : null;
+            abort_if(! $atual->doSite() && (! $cliente || ! $veiculo), 404);
             $horario = ['inicio' => $dados['inicio'], 'duracao_minutos' => $dados['duracao_minutos']];
             $request->merge(['encaixar' => false]);
             $this->verificarLotacao($request, $horario);
-            $proposta = $atual->preferencia->format('Y-m-d\TH:i') !== $dados['inicio'];
+            $proposta = ! $this->dentroDoPedido($atual, Carbon::parse($dados['inicio']));
             $agendamento = Agendamento::create($horario + [
-                'cliente_id' => $cliente->id, 'veiculo_id' => $veiculo->id, 'nome' => $cliente->nome,
-                'placa' => $veiculo->placa, 'servico' => $atual->servico, 'status' => $proposta ? 'proposto' : 'confirmado', 'user_id' => auth()->id(),
+                'cliente_id' => $cliente?->id, 'veiculo_id' => $veiculo?->id, 'nome' => $atual->nomeContato(),
+                'telefone' => $atual->telefone, 'placa' => $veiculo?->placa ?? $atual->placa,
+                'servico' => $atual->servico, 'status' => $proposta ? 'proposto' : 'confirmado', 'user_id' => auth()->id(),
+                'observacoes' => $atual->doSite() ? trim(implode(' · ', array_filter(['Pedido pelo site', $atual->carro, $atual->km ? number_format($atual->km, 0, ',', '.').' km' : null, $atual->observacao]))) : null,
             ]);
             $atual->update(['status' => $proposta ? 'proposta' : 'confirmada', 'agendamento_id' => $agendamento->id]);
+
+            return [$atual, $agendamento];
         }, 3);
 
-        return back()->with('ok', 'Solicitação respondida. O cliente pode consultar o resultado no portal.');
+        $enviado = false;
+        try {
+            $enviado = app(\App\Services\Agenda\AvisosAgenda::class)->resposta(auth()->user()->empresa, $pedido, $agendamento);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+        $aviso = $enviado ? ' O cliente recebeu a resposta no WhatsApp.'
+            : ($pedido->doSite() ? ' Avise o cliente pelo WhatsApp.' : ' O cliente vê a resposta na área do cliente.');
+
+        return back()->with('ok', 'Pedido respondido.'.$aviso);
+    }
+
+    /** O horário escolhido atende o que o cliente pediu? (mesmo dia e, no site, dentro do período). */
+    private function dentroDoPedido(AgendaSolicitacao $pedido, Carbon $inicio): bool
+    {
+        if (! $pedido->periodo) {
+            return $pedido->preferencia->format('Y-m-d H:i') === $inicio->format('Y-m-d H:i');
+        }
+        $hora = (int) $inicio->format('G');
+
+        return $inicio->isSameDay($pedido->preferencia) && ($pedido->periodo === 'manha' ? $hora < 12 : $hora >= 12);
     }
 
     public function abrirOs(Agendamento $agendamento)

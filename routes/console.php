@@ -102,7 +102,7 @@ Artisan::command('torque:lembretes', function (\App\Services\WhatsApp\WhatsApp $
                 }
                 $txt = 'Olá, '.explode(' ', trim($a->nome))[0].'! Lembrando do seu horário amanhã às '.$a->inicio->format('H:i')
                     .' na '.$empresa->nome_fantasia.' ('.$a->servico.'). Se precisar remarcar, é só responder.';
-                if ($whatsapp->enviar($empresa, $a->telefone, $txt, 'agenda', $a->id)) {
+                if ($whatsapp->enviar($empresa, $a->telefone ?: ($a->cliente?->whatsapp ?: $a->cliente?->telefone), $txt, 'agenda', $a->id)) {
                     $a->update(['lembrete_enviado_em' => now()]);
                     $enviados++;
                 }

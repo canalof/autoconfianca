@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             prepend: \App\Http\Middleware\DefinirArea::class,
         );
         $middleware->alias(['modulo' => \App\Http\Middleware\ExigirModulo::class]);
-        $middleware->validateCsrfTokens(except: ['webhooks/*']);
+        $middleware->validateCsrfTokens(except: ['webhooks/*', 'agendar']);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('painel'));
     })

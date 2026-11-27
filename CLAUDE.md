@@ -33,7 +33,8 @@ Tokens em `resources/css/app.css`: identidade AutoConfiança (grafite `asfalto`,
 - Dinheiro: `Services/Financeiro/Financeiro` (receber OS, receber/pagar contas, caixa).
 - Entrega da OS: `Services/Os/AoEntregar` (baixa estoque, comissão, lembretes).
 - Notas fiscais: `Services/Fiscal` (Focus NFe ou demonstração).
-- WhatsApp automático: `Services/WhatsApp` (Evolution API, opcional).
+- WhatsApp automático: `Services/WhatsApp` (Evolution API, opcional). Mensagens da agenda em `Services/Agenda/AvisosAgenda`; avisos à equipe vão para `WHATSAPP_AVISOS`. Detalhes em `docs/whatsapp.md`.
+- Agendamento pelo site: `POST /agendar` (`AgendamentoSiteController`, sem login e sem CSRF; limite `agendar-site`, campo-armadilha `site`, origem conferida) cria `AgendaSolicitacao` com `origem = site` (cliente e veículo opcionais). Formulários do `portal/` com `data-agendar` enviam por fetch e caem no WhatsApp se falhar.
 - Agendador: `routes/console.php` (`torque:notas` a cada 5 min, `torque:lembretes` às 9h).
 - Em Blade, use sempre `@php ... @endphp` (não misture com `@php(...)` no mesmo arquivo).
 - **Site institucional é estático** (pasta `portal/`, HTML/CSS/JS sem build), servido na raiz do domínio a partir de `/var/www/autocentro`. O Laravel roda em **`/sistema`** (link simbólico `portal/sistema` → `public/`), então dentro do Laravel as rotas são relativas: painel em `/`, área do cliente em `/area-do-cliente`, troca de área em `POST /area`. Arquivos públicos do sistema são referenciados como `/sistema/...` (marca, ícones, manifest, `sw.js`). `APP_URL` em produção termina em `/sistema`; `oficina.dominio` (`OFICINA_SITE_URL`) é a raiz do site. O deploy envia `portal/` para `PORTAL_PATH` sem apagar os links simbólicos. As views antigas do site em Laravel (`SiteController`, `resources/views/site`) não são mais usadas; `/institucional` só redireciona.

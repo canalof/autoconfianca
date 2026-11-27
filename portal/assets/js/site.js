@@ -104,23 +104,82 @@
   });
 
   /* formularios -> WhatsApp da oficina */
+  // Agendamento: envia para o sistema (/sistema/agendar). Se o sistema não responder,
+  // abre o WhatsApp da oficina com a mensagem pronta, como antes.
+  d.querySelectorAll("input[data-dia]").forEach(function (inp) {
+    var amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
+    var max = new Date(); max.setDate(max.getDate() + 60);
+    var iso = function (dt) { return new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+    inp.min = iso(amanha); inp.max = iso(max);
+  });
   d.querySelectorAll("form[data-wa]").forEach(function (f) {
-    f.addEventListener("submit", function (ev) {
-      ev.preventDefault();
-      var val = function (n) {
-        var el = f.querySelector('[name="' + n + '"]');
-        return el ? el.value.trim() : "";
-      };
-      var titulos = { nome: "Nome", telefone: "WhatsApp", email: "E-mail", veiculo: "Veículo", placa: "Placa", km: "KM", servico: "Serviço", periodo: "Melhor período", mensagem: "Detalhes" };
-      var linhas = ["Olá! Vim pelo site da AutoConfiança."];
+    var val = function (n) {
+      var el = f.querySelector('[name="' + n + '"]');
+      return el ? el.value.trim() : "";
+    };
+    var mostrar = function (sel, texto) {
+      var ok = f.querySelector("[data-ok]"), erro = f.querySelector("[data-erro]");
+      if (ok) ok.hidden = true;
+      if (erro) erro.hidden = true;
+      var el = f.querySelector(sel);
+      if (el) { el.textContent = ""; if (typeof texto === "string") el.textContent = texto; else el.appendChild(texto); el.hidden = false; }
+    };
+    var abrirWhats = function (direto) {
+      var titulos = { nome: "Nome", telefone: "WhatsApp", email: "E-mail", veiculo: "Veículo", placa: "Placa", km: "KM", servico: "Serviço", dia: "Dia", periodo: "Período", mensagem: "Detalhes" };
+      var linhas = ["Olá! Vim pelo site da AutoConfiança e quero agendar."];
       Object.keys(titulos).forEach(function (k) {
         var v = val(k);
+        if (k === "periodo") v = v === "tarde" ? "Tarde" : (v ? "Manhã" : "");
+        if (k === "dia" && v) v = v.split("-").reverse().join("/");
         if (v) linhas.push(titulos[k] + ": " + v);
       });
-      var numero = f.getAttribute("data-wa");
-      window.open("https://wa.me/" + numero + "?text=" + encodeURIComponent(linhas.join("\n")), "_blank", "noopener");
-      var ok = f.querySelector("[data-ok]");
-      if (ok) ok.hidden = false;
+      var link = "https://wa.me/" + f.getAttribute("data-wa") + "?text=" + encodeURIComponent(linhas.join("\n"));
+      if (direto) {
+        window.open(link, "_blank", "noopener");
+        mostrar("[data-ok]", "Mensagem pronta no WhatsApp. Se a janela não abrir, chame no (19) 99482-7163.");
+        return;
+      }
+      // Depois de uma espera o navegador bloqueia janela automática: mostra um link para tocar.
+      var p = d.createElement("span");
+      p.appendChild(d.createTextNode("Não conseguimos registrar o pedido agora. "));
+      var a = d.createElement("a");
+      a.href = link; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Toque aqui para mandar pelo WhatsApp.";
+      p.appendChild(a);
+      mostrar("[data-erro]", p);
+    };
+    f.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var url = f.getAttribute("data-agendar");
+      if (!url || !window.fetch) { abrirWhats(true); return; }
+      var dia = val("dia");
+      if (dia) {
+        var sem = new Date(dia + "T12:00:00").getDay();
+        if (sem === 0 || (sem === 6 && val("periodo") === "tarde")) {
+          mostrar("[data-erro]", "Atendemos de segunda a sexta e sábado de manhã. Escolha outro dia ou período.");
+          return;
+        }
+      }
+      var botao = f.querySelector('button[type="submit"]');
+      if (botao) botao.setAttribute("aria-busy", "true");
+      fetch(url, { method: "POST", body: new FormData(f), headers: { "Accept": "application/json" }, credentials: "same-origin" })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; });
+        })
+        .then(function (res) {
+          if (res.status === 200 && res.j.ok) {
+            mostrar("[data-ok]", res.j.mensagem || "Pedido recebido!");
+            if (!res.j.repetido) f.reset();
+          } else if (res.status === 422) {
+            var erros = res.j.errors ? Object.keys(res.j.errors).map(function (k) { return res.j.errors[k][0]; }) : [];
+            mostrar("[data-erro]", erros[0] || res.j.message || "Confira os campos.");
+          } else if (res.status === 429) {
+            mostrar("[data-erro]", "Muitos pedidos seguidos. Chame a oficina no WhatsApp: (19) 99482-7163.");
+          } else {
+            abrirWhats(false);
+          }
+        })
+        .catch(function () { abrirWhats(false); })
+        .then(function () { if (botao) botao.removeAttribute("aria-busy"); });
     });
   });
 })();

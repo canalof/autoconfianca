@@ -138,7 +138,16 @@ html{scroll-padding-top:0}
 .book .label{color:rgba(255,255,255,.6)}
 .book .input{background:#141414;border-color:#2A2A2A;color:#fff}
 .book .input::placeholder{color:#6a6a6a}
-.ok{background:rgba(225,27,34,.15);border:1px solid var(--brand);color:#fff;padding:12px 14px;font-size:.9rem;margin-top:14px}
+.ok{background:#EAF6EC;border:1px solid #2E7D32;color:#1B4D1F;padding:12px 14px;font-size:.92rem;margin-top:14px}
+.erro{background:#FDECEC;border:1px solid var(--brand);color:#8A1014;padding:12px 14px;font-size:.92rem;margin-top:14px}
+.erro a,.ok a{color:inherit;text-decoration:underline}
+.nota{font-size:.8rem;color:var(--muted);margin-top:10px}
+.book .ok{background:rgba(46,125,50,.18);border-color:#4CAF50;color:#fff}
+.book .erro{background:rgba(225,27,34,.18);color:#fff}
+.book .nota{color:rgba(255,255,255,.5);margin-bottom:0}
+.book .input{color-scheme:dark}
+.armadilha{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+button[aria-busy="true"]{opacity:.6;pointer-events:none}
 .steps{display:grid;gap:20px}
 .step{display:grid;grid-template-columns:52px 1fr;gap:18px;align-items:start}
 .step__n{width:52px;height:52px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);color:var(--brand);font-family:var(--display);font-size:1.1rem}

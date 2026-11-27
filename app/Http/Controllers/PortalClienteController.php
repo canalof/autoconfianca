@@ -41,16 +41,21 @@ class PortalClienteController extends Controller
             'preferencia' => ['required', 'date_format:Y-m-d\TH:i', 'after:now'],
             'servico' => ['required', 'string', 'max:200'],
         ]);
-        DB::transaction(function () use ($cliente, $dados, $token) {
+        $novo = DB::transaction(function () use ($cliente, $dados, $token) {
             Cliente::whereKey($cliente->id)->where('portal_token', $token)->lockForUpdate()->firstOrFail();
             $veiculo = $cliente->veiculos()->lockForUpdate()->findOrFail($dados['veiculo_id']);
             $aberta = AgendaSolicitacao::where('veiculo_id', $veiculo->id)->where('cliente_id', $cliente->id)
                 ->where(fn ($q) => $q->where('status', 'pendente')->orWhere(fn ($q) => $q->where('status', 'proposta')
                     ->whereHas('agendamento', fn ($q) => $q->where('status', 'proposto')->where('inicio', '>', now()))))->exists();
-            if (! $aberta) {
-                AgendaSolicitacao::create($dados + ['cliente_id' => $cliente->id, 'status' => 'pendente']);
-            }
+            return $aberta ? null : AgendaSolicitacao::create($dados + ['cliente_id' => $cliente->id, 'status' => 'pendente', 'origem' => 'portal']);
         }, 3);
+        if ($novo) {
+            try {
+                app(\App\Services\Agenda\AvisosAgenda::class)->avisarOficina(Empresa::findOrFail($cliente->empresa_id), $novo->load('veiculo', 'cliente'));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
 
         return redirect()->route('portal.ver', $token)->with('ok', 'A oficina pode confirmar ou oferecer outro horário. Confira a situação nesta página.');
     }

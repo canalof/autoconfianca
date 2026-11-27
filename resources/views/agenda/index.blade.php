@@ -21,15 +21,28 @@
 
     @if ($solicitacoes->isNotEmpty())
         <section class="card card-corpo mb-5 space-y-3">
-            <h2>Solicitações do portal</h2>
+            <h2>Pedidos de agendamento</h2>
             @foreach ($solicitacoes as $pedido)
+                @php
+                    $fone = $pedido->telefoneContato();
+                    $placaPedido = $pedido->veiculo?->placa ?? $pedido->placa;
+                    $padrao = $pedido->periodo ? $pedido->preferencia->copy()->setTime($pedido->periodo === 'manha' ? 8 : 13, 0) : $pedido->preferencia;
+                @endphp
                 <article class="space-y-2 rounded border border-linha p-3">
-                    <p class="font-medium">{{ $pedido->veiculo?->placaFormatada() ?? 'Veículo indisponível' }} · {{ $pedido->servico }}</p>
-                    <p class="text-sm">Horário solicitado {{ $pedido->preferencia->format('d/m/Y H:i') }}</p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $pedido->doSite() ? 'bg-[#e6eef8] text-[#1f4f82]' : 'bg-fundo text-suave' }}">{{ $pedido->doSite() ? 'Site' : 'Área do cliente' }}</span>
+                        @if ($placaPedido)<x-placa :placa="$placaPedido" />@endif
+                        <span class="font-medium">{{ $pedido->nomeContato() }}</span>
+                        @if ($pedido->doSite() && ! $pedido->cliente_id)<span class="text-xs text-suave">sem cadastro</span>@endif
+                        @if ($fone)<a class="text-sm underline" href="https://wa.me/{{ \App\Services\WhatsApp\WhatsApp::numero($fone) }}" target="_blank" rel="noopener">{{ $fone }}</a>@endif
+                    </div>
+                    <p class="text-sm">{{ $pedido->servico }}{{ $pedido->carro ? ' · '.$pedido->carro : ($pedido->veiculo ? ' · '.$pedido->veiculo->modelo : '') }}{{ $pedido->km ? ' · '.number_format($pedido->km, 0, ',', '.').' km' : '' }}</p>
+                    @if ($pedido->observacao)<p class="text-sm text-suave">{{ $pedido->observacao }}</p>@endif
+                    <p class="text-sm">Pediu: <strong>{{ $pedido->quandoPedido() }}</strong></p>
                     @can('agenda.editar')
                         <form method="post" action="{{ route('agenda.solicitacoes.responder', $pedido) }}" class="flex flex-wrap items-end gap-2">
                             @csrf
-                            <label class="campo"><span>Horário a confirmar</span><input class="input" type="datetime-local" name="inicio" value="{{ $pedido->preferencia->format('Y-m-d\TH:i') }}" required></label>
+                            <label class="campo"><span>Horário a confirmar</span><input class="input" type="datetime-local" name="inicio" value="{{ $padrao->format('Y-m-d\TH:i') }}" required></label>
                             <label class="campo"><span>Duração (min)</span><input class="input" type="number" name="duracao_minutos" min="15" max="600" value="60" required></label>
                             <button class="btn-primario" name="decisao" value="confirmar">Confirmar ou propor horário</button>
                         </form>

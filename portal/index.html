@@ -225,8 +225,8 @@
 
       <div class="book__panel rv">
         <h2>Agendar serviço</h2>
-        <p>Preencha os dados do veículo. A mensagem abre pronta no WhatsApp.</p>
-        <form class="form-grid" data-wa="5519994827163">
+        <p>Escolha o dia e o período. O pedido cai direto na agenda da oficina e a confirmação chega no seu WhatsApp.</p>
+        <form class="form-grid" data-wa="5519994827163" data-agendar="/sistema/agendar">
           <div class="field full"><label for="a-nome">Nome *</label><input class="input" id="a-nome" name="nome" required placeholder="Seu nome"></div>
           <div class="field"><label for="a-tel">WhatsApp *</label><input class="input" id="a-tel" name="telefone" data-phone required placeholder="(19) 90000-0000"></div>
           <div class="field"><label for="a-placa">Placa</label><input class="input" id="a-placa" name="placa" placeholder="ABC1D23" maxlength="7"></div>
@@ -239,10 +239,10 @@
               <option>Injeção e diagnóstico</option>
             </select>
           </div>
-          <div class="field full"><label for="a-data">Melhor período</label>
-            <select class="input" id="a-data" name="periodo"><option>Manhã (8h às 12h)</option><option>Tarde (13h às 18h)</option><option>Sábado (8h às 12h)</option></select>
-          </div>
-          <div class="full"><button class="btn btn--block" type="submit">Enviar pelo WhatsApp</button><p class="ok" data-ok hidden>Mensagem pronta no WhatsApp. Se a janela não abrir, chame no (19) 99482-7163.</p></div>
+          <div class="field"><label for="a-dia">Dia *</label><input class="input" id="a-dia" name="dia" type="date" required data-dia></div>
+          <div class="field"><label for="a-per">Período *</label><select class="input" id="a-per" name="periodo" required><option value="manha">Manhã (8h às 12h)</option><option value="tarde">Tarde (13h às 18h)</option></select></div>
+          <div class="armadilha" aria-hidden="true"><label>Não preencha<input name="site" tabindex="-1" autocomplete="off"></label></div>
+          <div class="full"><button class="btn btn--block" type="submit">Pedir agendamento</button><p class="ok" data-ok hidden role="status"></p><p class="erro" data-erro hidden role="alert"></p><p class="nota">Sábado só de manhã. Domingo fechado.</p></div>
         </form>
       </div>
     </div>
